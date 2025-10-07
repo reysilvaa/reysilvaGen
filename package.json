@@ -1,0 +1,120 @@
+{
+  "name": "reysilvagen-desktop",
+  "version": "2.0.1",
+  "description": "Modern Test Card Generator & Address Fetcher with Admin Panel - Built with Electron",
+  "main": "src/main/main.js",
+  "scripts": {
+    "start": "electron .",
+    "dev": "electron . --dev",
+    "build": "electron-builder --win --x64",
+    "build:win": "electron-builder --win --x64",
+    "build:mac": "electron-builder --mac",
+    "build:linux": "electron-builder --linux",
+    "clean": "rmdir /s /q dist",
+    "postinstall": "electron-builder install-app-deps"
+  },
+  "keywords": [
+    "card-generator",
+    "testing",
+    "qa",
+    "electron"
+  ],
+  "author": "Reysilva",
+  "license": "MIT",
+  "devDependencies": {
+    "electron": "^28.0.0",
+    "electron-builder": "^24.9.1",
+    "electron-rebuild": "^3.2.9"
+  },
+  "dependencies": {
+    "axios": "^1.6.2",
+    "electron-updater": "^6.1.7",
+    "smart-buffer": "^4.2.0"
+  },
+  "build": {
+    "appId": "com.reysilva.reysilvagen",
+    "productName": "ReysilvaGEN",
+    "directories": {
+      "output": "dist",
+      "buildResources": "assets"
+    },
+    "files": [
+      "src/**/*",
+      "assets/**/*",
+      "package.json",
+      "!**/node_modules/**/*",
+      "node_modules/axios/**/*",
+      "node_modules/smart-buffer/**/*",
+      "node_modules/electron-updater/**/*"
+    ],
+    "compression": "maximum",
+    "asar": true,
+    "asarUnpack": [
+      "assets/**/*"
+    ],
+    "extraResources": [
+      {
+        "from": "assets/address",
+        "to": "address"
+      },
+      {
+        "from": "assets/icon.ico",
+        "to": "icon.ico"
+      }
+    ],
+    "publish": {
+      "provider": "github",
+      "owner": "reysilva",
+      "repo": "reysilvagen",
+      "releaseType": "release"
+    },
+    "win": {
+      "target": [
+        {
+          "target": "nsis",
+          "arch": [
+            "x64"
+          ]
+        }
+      ],
+      "icon": "assets/icon.ico",
+      "publisherName": "Reysilva",
+      "verifyUpdateCodeSignature": false,
+      "signAndEditExecutable": false,
+      "signDlls": false,
+      "requestedExecutionLevel": "requireAdministrator"
+    },
+    "nsis": {
+      "oneClick": false,
+      "allowToChangeInstallationDirectory": true,
+      "createDesktopShortcut": true,
+      "createStartMenuShortcut": true,
+      "shortcutName": "ReysilvaGEN",
+      "installerIcon": "assets/icon.ico",
+      "uninstallerIcon": "assets/icon.ico",
+      "installerHeaderIcon": "assets/icon.ico",
+      "artifactName": "${productName}-Setup-${version}.${ext}",
+      "deleteAppDataOnUninstall": false,
+      "perMachineInstall": false,
+      "allowElevation": true,
+      "differentialPackage": true,
+      "packElevateHelper": false,
+      "warningsAsErrors": false,
+      "include": null,
+      "menuCategory": true,
+      "runAfterFinish": true
+    },
+    "mac": {
+      "target": [
+        "dmg"
+      ],
+      "category": "public.app-category.developer-tools"
+    },
+    "linux": {
+      "target": [
+        "AppImage"
+      ],
+      "category": "Development"
+    }
+  }
+}
