@@ -33,9 +33,90 @@ class TempmailHeadless {
   /**
    * Generate email from tempmail.ac.id
    * @param {string} preferredDomain - Domain untuk fallback email (oliq.me, asmojo.tech, gipo.me)
+   * @param {string} customEmail - Custom email to switch to (e.g., username@domain.com)
    */
-  async generateEmail(preferredDomain = null) {
+  async generateEmail(preferredDomain = null, customEmail = null) {
     try {
+      const window = this.getWindow();
+      
+      // If custom email is provided, scrape form submission
+      if (customEmail) {
+        const [username, domain] = customEmail.split('@');
+        
+        return new Promise((resolve) => {
+          const loadHandler = async () => {
+            try {
+              await new Promise(r => setTimeout(r, 1800)); // Wait untuk Livewire
+              
+              console.log(`📝 Creating email: ${username}@${domain}`);
+              
+              // Fill form dan submit
+              const result = await window.webContents.executeJavaScript(`
+                (async function() {
+                  // Klik tombol New untuk show form (jika ada)
+                  const newBtn = document.querySelector('[x-on\\\\:click*="in_app = true"]');
+                  if (newBtn) {
+                    newBtn.click();
+                    await new Promise(r => setTimeout(r, 400));
+                  }
+                  
+                  // Isi username
+                  const userInput = document.getElementById('user');
+                  if (userInput) {
+                    userInput.value = '${username}';
+                    userInput.dispatchEvent(new Event('input', { bubbles: true }));
+                  }
+                  
+                  // Pilih domain dari dropdown
+                  const domainOption = document.querySelector('[x-on\\\\:click*="setDomain(\\'${domain}\\')"]');
+                  if (domainOption) {
+                    domainOption.click();
+                    await new Promise(r => setTimeout(r, 200));
+                  }
+                  
+                  // Klik button create
+                  const createBtn = document.getElementById('create');
+                  if (createBtn) {
+                    createBtn.click();
+                    await new Promise(r => setTimeout(r, 1500)); // Wait for Livewire
+                  }
+                  
+                  // Get generated email
+                  const emailDiv = document.getElementById('email_id');
+                  if (emailDiv && emailDiv.textContent) {
+                    return { email: emailDiv.textContent.trim() };
+                  }
+                  
+                  return { email: null };
+                })();
+              `);
+              
+              if (result.email && result.email === customEmail) {
+                this.currentEmail = customEmail;
+                console.log(`✅ Email successfully created: ${customEmail}`);
+                resolve({ success: true, email: customEmail, message: 'Email created successfully' });
+              } else if (result.email) {
+                this.currentEmail = result.email;
+                console.log(`⚠️ Website returned: ${result.email} (requested: ${customEmail})`);
+                resolve({ success: true, email: result.email, message: 'Email created successfully' });
+              } else {
+                console.error('❌ No email found after form submission');
+                resolve({ success: false, email: null, message: 'Failed to create email' });
+              }
+            } catch (error) {
+              console.error('❌ Error during email creation:', error);
+              resolve({ success: false, email: null, message: `Error: ${error.message}` });
+            }
+          };
+          
+          window.webContents.once('did-finish-load', loadHandler);
+          window.loadURL('https://tempmail.ac.id').catch(err => {
+            console.error('❌ Failed to load tempmail.ac.id:', err);
+            resolve({ success: false, email: null, message: `Failed to load: ${err.message}` });
+          });
+        });
+      }
+      
       // Jika ada email sebelumnya, delete dulu
       if (this.currentEmail && this.window && !this.window.isDestroyed()) {
         try {
@@ -50,8 +131,6 @@ class TempmailHeadless {
           // Ignore, akan create window baru
         }
       }
-      
-      const window = this.getWindow();
       
       return new Promise((resolve) => {
         const loadHandler = async () => {
@@ -129,17 +208,29 @@ class TempmailHeadless {
         return { success: false, message: "No email generated yet", emails: [] };
       }
 
+      if (!this.currentEmail) {
+        return { success: false, message: "No email active", emails: [] };
+      }
+
+      console.log(`🔍 Checking inbox for: ${this.currentEmail}`);
+
+      // Get current URL
+      const currentURL = this.window.webContents.getURL();
+      console.log(`Current URL: ${currentURL}`);
+
       await this.window.webContents.reload();
       
       return new Promise((resolve) => {
         this.window.webContents.once('did-finish-load', async () => {
           try {
-            await new Promise(r => setTimeout(r, 2000));
+            await new Promise(r => setTimeout(r, 2500)); // Wait longer for Livewire
             
             const result = await this.window.webContents.executeJavaScript(`
               (function() {
                 const emails = [];
                 const emailItems = document.querySelectorAll('[data-id]');
+                
+                console.log('📧 Found email items:', emailItems.length);
                 
                 emailItems.forEach(item => {
                   const id = item.getAttribute('data-id');
@@ -148,19 +239,24 @@ class TempmailHeadless {
                   const emailEl = item.querySelector('.text-xs');
                   
                   if (id) {
-                    emails.push({
+                    const email = {
                       id: id,
                       sender: senderEl ? senderEl.textContent.trim() : 'Unknown',
                       from: emailEl ? emailEl.textContent.trim() : '',
                       subject: subjectEl ? subjectEl.textContent.trim() : 'No Subject',
                       read: false
-                    });
+                    };
+                    console.log('📨 Email found:', email);
+                    emails.push(email);
                   }
                 });
                 
+                console.log('✅ Total emails:', emails.length);
                 return { emails };
               })();
             `);
+            
+            console.log(`📬 Inbox result: ${result.emails.length} email(s) found`);
 
             // Extract OTP from each email
             for (const email of result.emails) {

@@ -1,9 +1,15 @@
 const { app, BrowserWindow, ipcMain, Menu } = require("electron");
 const path = require("path");
-const ConfigManager = require("../lib/config-manager");
-const CursorResetManager = require("../lib/cursor-reset-manager");
-const TempmailHeadless = require("../lib/tempmail-headless");
-const AutoUpdaterManager = require("../lib/auto-updater");
+
+// Modules
+const ConfigManager = require("../modules/config-manager");
+const CursorResetManager = require("../modules/cursor-reset-manager");
+
+// Scrapers
+const TempmailScraper = require("../scrapers/tempmail-scraper");
+
+// Utils
+const AutoUpdaterManager = require("../utils/auto-updater");
 
 let mainWindow;
 let splashWindow;
@@ -287,10 +293,10 @@ ipcMain.handle("cursor-check-status", async () => {
 });
 
 // Tempmail Operations - Headless Browser
-ipcMain.handle("tempmail-generate", async (event, domain) => {
+ipcMain.handle("tempmail-generate", async (event, domain, customEmail) => {
   try {
-    if (!tempmailHeadless) tempmailHeadless = new TempmailHeadless();
-    return await tempmailHeadless.generateEmail(domain);
+    if (!tempmailHeadless) tempmailHeadless = new TempmailScraper();
+    return await tempmailHeadless.generateEmail(domain, customEmail);
   } catch (error) {
     return { success: false, message: error.message };
   }
@@ -342,48 +348,5 @@ ipcMain.handle("tempmail-toggle-debug", async () => {
     return tempmailHeadless.toggleDebug();
   } catch (error) {
     return { success: false, message: error.message };
-  }
-});
-
-// Card Generator Operations
-ipcMain.handle("generate-card", async (event, options) => {
-  try {
-    const CardGenerator = require("../lib/card-generator");
-    const generator = new CardGenerator();
-    return generator.generate(options);
-  } catch (error) {
-    return { success: false, error: error.message };
-  }
-});
-
-// Address Generator Operations
-ipcMain.handle("generate-address", async (event, { country, state }) => {
-  try {
-    const AddressGenerator = require("../lib/address-generator");
-    const generator = new AddressGenerator();
-    return await generator.generateAddress(country, state);
-  } catch (error) {
-    return { success: false, error: error.message };
-  }
-});
-
-ipcMain.handle("get-address-stats", async () => {
-  try {
-    const AddressGenerator = require("../lib/address-generator");
-    const generator = new AddressGenerator();
-    return generator.getStats();
-  } catch (error) {
-    return { success: false, error: error.message };
-  }
-});
-
-// Name Generator Operations  
-ipcMain.handle("generate-name", async (event, { gender, country }) => {
-  try {
-    const NameGenerator = require("../lib/name-generator");
-    const generator = new NameGenerator();
-    return generator.generateName(gender, country);
-  } catch (error) {
-    return { success: false, error: error.message };
   }
 });

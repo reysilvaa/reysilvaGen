@@ -25,24 +25,32 @@
       console.log("🚀 Loading main app...");
 
       await this.loadScripts([
-        // Components
-        "components/component-loader.js",
-        "components/sidebar.js",
-        "components/cards-tab.js",
-        "components/address-tab.js",
-        "components/combined-tab.js",
-        "components/cursor-reset-tab.js",
-        "components/tempmail-tab.js",
-        "components/footer.js",
-        "components/loading-overlay.js",
-        // Libraries
-        "dialog.js",
-        "../lib/card-generator.js",
-        "../lib/name-generator.js",
-        "../lib/csv-loader.js",
-        "../lib/address-generator.js",
+        // Shared Components
+        "components/shared/component-loader.js",
+        "components/shared/sidebar.js",
+        "components/shared/footer.js",
+        "components/shared/loading-overlay.js",
+        // Tab Components
+        "components/tabs/cards-tab.js",
+        "components/tabs/address-tab.js",
+        "components/tabs/combined-tab.js",
+        "components/tabs/cursor-reset-tab.js",
+        "components/tabs/tempmail-tab.js",
+        // Models
+        "../models/card-generator.js",
+        "../models/name-generator.js",
+        "../models/address-generator.js",
+        // Modules
+        "../modules/csv-loader.js",
+        // Controllers
+        "controllers/cards-controller.js",
+        "controllers/address-controller.js",
+        "controllers/combined-controller.js",
+        "controllers/cursor-controller.js",
+        "controllers/tempmail-init.js",
         // Utils & Init
-        "utils.js",
+        "utils/utils.js",
+        "dialog.js",
         "app-init.js",
       ]);
 
@@ -74,15 +82,17 @@
       console.log("🔐 Loading admin panel...");
 
       await this.loadScripts([
-        "components/component-loader.js",
-        "components/admin-login.js",
-        "components/admin-sidebar.js",
-        "components/bins-section.js",
-        "components/settings-section.js",
-        "components/bin-modal.js",
-        "components/loading-overlay.js",
+        // Components
+        "components/shared/component-loader.js",
+        "components/shared/admin-login.js",
+        "components/shared/admin-sidebar.js",
+        "components/shared/bins-section.js",
+        "components/shared/settings-section.js",
+        "components/shared/bin-modal.js",
+        "components/shared/loading-overlay.js",
+        // Utils & Init
+        "utils/utils.js",
         "dialog.js",
-        "utils.js",
         "admin.js",
       ]);
 

@@ -3,9 +3,6 @@ const { contextBridge, ipcRenderer } = require("electron");
 // Expose protected methods that allow the renderer process to use
 // the ipcRenderer without exposing the entire object
 contextBridge.exposeInMainWorld("electron", {
-  generateCards: (options) => ipcRenderer.invoke("generate-cards", options),
-  fetchAddress: () => ipcRenderer.invoke("fetch-address"),
-
   // Open admin panel
   openAdminPanel: () => ipcRenderer.invoke("open-admin-panel"),
 
@@ -41,7 +38,7 @@ contextBridge.exposeInMainWorld("cursorResetAPI", {
 
 // Tempmail API
 contextBridge.exposeInMainWorld("tempmailAPI", {
-  generateEmail: (domain) => ipcRenderer.invoke("tempmail-generate", domain),
+  generateEmail: (domain, customEmail) => ipcRenderer.invoke("tempmail-generate", domain, customEmail),
   checkInbox: () => ipcRenderer.invoke("tempmail-check-inbox"),
   readEmail: (emailId) => ipcRenderer.invoke("tempmail-read-email", emailId),
   getCurrentEmail: () => ipcRenderer.invoke("tempmail-get-current"),
@@ -58,20 +55,4 @@ contextBridge.exposeInMainWorld("autoUpdater", {
   onDownloadProgress: (callback) => ipcRenderer.on("update-download-progress", (_, progress) => callback(progress)),
   onUpdateDownloaded: (callback) => ipcRenderer.on("update-downloaded", (_, info) => callback(info)),
   onUpdateError: (callback) => ipcRenderer.on("update-error", (_, error) => callback(error)),
-});
-
-// Card Generator API (now centralized in main process)
-contextBridge.exposeInMainWorld("cardGeneratorAPI", {
-  generate: (options) => ipcRenderer.invoke("generate-card", options),
-});
-
-// Address Generator API (now centralized in main process)
-contextBridge.exposeInMainWorld("addressGeneratorAPI", {
-  generate: (country, state) => ipcRenderer.invoke("generate-address", { country, state }),
-  getStats: () => ipcRenderer.invoke("get-address-stats"),
-});
-
-// Name Generator API (now centralized in main process)
-contextBridge.exposeInMainWorld("nameGeneratorAPI", {
-  generate: (gender, country) => ipcRenderer.invoke("generate-name", { gender, country }),
 });

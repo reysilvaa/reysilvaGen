@@ -47,6 +47,15 @@
   gap: var(--spacing-sm);
 }
 
+/* Domain Dropdown */
+.domain-option:hover {
+  background: var(--bg-hover) !important;
+}
+
+.email-history-item:hover {
+  background: var(--bg-hover) !important;
+}
+
 .form-group label {
   font-weight: 600;
   color: var(--text-secondary);
@@ -175,6 +184,23 @@ input[type="checkbox"] {
 
 .btn-secondary:hover {
   background: var(--bg-hover);
+}
+
+.btn-success {
+  background: var(--success);
+  color: white;
+  border-color: var(--success);
+  font-weight: 600;
+}
+
+.btn-success:hover {
+  background: #059669;
+  box-shadow: 0 4px 16px rgba(16, 185, 129, 0.3);
+}
+
+.btn-success:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
 }
 
 .btn-danger {
