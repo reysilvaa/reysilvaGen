@@ -350,3 +350,21 @@ ipcMain.handle("tempmail-toggle-debug", async () => {
     return { success: false, message: error.message };
   }
 });
+
+ipcMain.handle("tempmail-switch", async (event, email) => {
+  try {
+    if (!tempmailHeadless) tempmailHeadless = new TempmailScraper();
+    return await tempmailHeadless.switchToEmail(email);
+  } catch (error) {
+    return { success: false, message: error.message };
+  }
+});
+
+ipcMain.handle("tempmail-delete", async () => {
+  try {
+    if (!tempmailHeadless) return { success: false, message: "No active email" };
+    return await tempmailHeadless.deleteCurrentEmail();
+  } catch (error) {
+    return { success: false, message: error.message };
+  }
+});

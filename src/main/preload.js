@@ -44,6 +44,8 @@ contextBridge.exposeInMainWorld("tempmailAPI", {
   getCurrentEmail: () => ipcRenderer.invoke("tempmail-get-current"),
   clear: () => ipcRenderer.invoke("tempmail-clear"),
   toggleDebug: () => ipcRenderer.invoke("tempmail-toggle-debug"),
+  switchToEmail: (email) => ipcRenderer.invoke("tempmail-switch", email),
+  deleteEmail: () => ipcRenderer.invoke("tempmail-delete"),
 });
 
 // Auto Updater API

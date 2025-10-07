@@ -725,6 +725,12 @@ input[type="checkbox"] {
   display: flex;
   align-items: center;
   gap: 8px;
+  padding-bottom: 10px;
+  border-bottom: 1px solid var(--border);
+}
+
+.section-title svg {
+  opacity: 0.7;
 }
 
 /* Email Display Card */
@@ -785,6 +791,41 @@ input[type="checkbox"] {
   background: var(--bg-hover);
   color: var(--text-primary);
   border-color: var(--primary);
+}
+
+/* Refresh Icon Button - Professional Clean Style */
+.btn-refresh-icon {
+  background: transparent;
+  border: none;
+  padding: 8px;
+  color: var(--success);
+  cursor: pointer;
+  transition: all var(--transition-base);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: var(--radius-md);
+  position: relative;
+}
+
+.btn-refresh-icon:hover:not(:disabled) {
+  color: #059669;
+  transform: rotate(180deg);
+  background: rgba(16, 185, 129, 0.1);
+}
+
+.btn-refresh-icon:active:not(:disabled) {
+  transform: rotate(180deg) scale(0.95);
+}
+
+.btn-refresh-icon:disabled {
+  color: var(--text-muted);
+  cursor: not-allowed;
+  opacity: 0.4;
+}
+
+.btn-refresh-icon svg {
+  transition: all var(--transition-base);
 }
 
 /* Action Buttons */

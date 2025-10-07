@@ -6,6 +6,7 @@ function initTempmailTab() {
   const newEmailBtn = document.getElementById("new-email-btn");
   const randomEmailBtn = document.getElementById("random-email-btn");
   const checkInboxBtn = document.getElementById("check-inbox-btn");
+  const deleteEmailBtn = document.getElementById("delete-email-btn");
   const copyEmailBtn = document.getElementById("copy-email-btn");
   const autoRefreshCheckbox = document.getElementById("auto-refresh-checkbox");
   const emailDisplay = document.getElementById("tempmail-email-display");
@@ -128,6 +129,7 @@ function initTempmailTab() {
         emailDisplay.textContent = result.email;
         copyEmailBtn.style.display = "flex";
         checkInboxBtn.disabled = false;
+        deleteEmailBtn.disabled = false;
         
         addToHistory(result.email);
         
@@ -144,6 +146,7 @@ function initTempmailTab() {
         emailDisplay.textContent = "Failed to generate email";
         copyEmailBtn.style.display = "none";
         checkInboxBtn.disabled = true;
+        deleteEmailBtn.disabled = true;
         utils.showError(result.message || "Failed to generate email - please try again");
       }
     } catch (error) {
@@ -205,22 +208,25 @@ function initTempmailTab() {
   async function switchToEmail(email) {
     utils.showLoading();
     try {
-      const domain = email.split('@')[1];
-      await window.tempmailAPI.clear();
-      const result = await window.tempmailAPI.generateEmail(domain, email);
+      // 🚀 FAST SWITCH - langsung ke URL /switch/email
+      const result = await window.tempmailAPI.switchToEmail(email);
       
       if (result.success && result.email) {
         emailDisplay.textContent = result.email;
         copyEmailBtn.style.display = "flex";
         checkInboxBtn.disabled = false;
+        deleteEmailBtn.disabled = false;
         
         inboxDiv.innerHTML = '<div class="placeholder-box" style="text-align: center; padding: 40px 20px; color: var(--text-muted);"><p>Inbox is empty. Waiting for emails...</p></div>';
         inboxBadge.textContent = "0";
         hideOTP();
         
-        utils.showSuccess(result.email !== email ? `✅ Switched to ${result.email}` : `✅ Switched to ${email}`);
+        utils.showSuccess(`Switched to ${result.email}`);
+        
+        // Auto check inbox setelah switch
+        setTimeout(() => checkInbox(true), 500);
       } else {
-        utils.showError(result.message || "Failed to switch email - email may not be available");
+        utils.showError(result.message || "Failed to switch email");
       }
     } catch (error) {
       utils.showError(`Error: ${error.message}`);
@@ -268,6 +274,50 @@ function initTempmailTab() {
     if (email && email !== "Click 'Generate' to get started" && email !== "Generating...") {
       await navigator.clipboard.writeText(email);
       utils.showSuccess("Email copied to clipboard!");
+    }
+  });
+
+  deleteEmailBtn?.addEventListener("click", async () => {
+    const email = emailDisplay.textContent;
+    if (!email || email === "Click 'Generate' to get started" || email === "Generating...") {
+      return utils.showError("No email to delete");
+    }
+
+    const confirmed = await window.dialog.confirm(
+      `Delete email: ${email}?`,
+      "Delete Email",
+      true
+    );
+
+    if (!confirmed) return;
+
+    utils.showLoading();
+    try {
+      const result = await window.tempmailAPI.deleteEmail();
+      
+      if (result.success) {
+        // Remove from history
+        emailHistory = emailHistory.filter(e => e !== result.deletedEmail);
+        localStorage.setItem('tempmailHistory', JSON.stringify(emailHistory));
+        renderHistory();
+
+        // Reset UI
+        emailDisplay.textContent = "Click 'Generate' to get started";
+        copyEmailBtn.style.display = "none";
+        checkInboxBtn.disabled = true;
+        deleteEmailBtn.disabled = true;
+        inboxDiv.innerHTML = '<div class="placeholder-box" style="text-align: center; padding: 40px 20px; color: var(--text-muted);"><p>No emails generated yet</p></div>';
+        inboxBadge.textContent = "0";
+        hideOTP();
+
+        utils.showSuccess(`🗑️ ${result.message}`);
+      } else {
+        utils.showError(result.message || "Failed to delete email");
+      }
+    } catch (error) {
+      utils.showError(`Error: ${error.message}`);
+    } finally {
+      utils.hideLoading();
     }
   });
 

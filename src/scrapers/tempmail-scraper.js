@@ -452,6 +452,102 @@ class TempmailHeadless {
     this.currentEmail = `${randomString}@${domain}`;
     return this.currentEmail;
   }
+
+  /**
+   * Switch to existing email (FAST - no scraping needed)
+   * @param {string} email - Email dari history
+   */
+  async switchToEmail(email) {
+    try {
+      console.log(`🔄 Switching to: ${email}`);
+      
+      if (!this.window) {
+        this.window = this.createWindow();
+      }
+
+      const switchUrl = `https://tempmail.ac.id/switch/${email}`;
+      await this.window.loadURL(switchUrl);
+
+      // Wait for page load
+      await new Promise(resolve => setTimeout(resolve, 1500));
+
+      // Get the displayed email
+      const displayedEmail = await this.window.webContents.executeJavaScript(`
+        (function() {
+          const emailEl = document.querySelector('[x-text="currentEmail"]') || 
+                         document.querySelector('.text-gray-900.font-medium');
+          return emailEl ? emailEl.textContent.trim() : null;
+        })();
+      `);
+
+      this.currentEmail = displayedEmail || email;
+      
+      console.log(`✅ Switched to: ${this.currentEmail}`);
+      
+      return {
+        success: true,
+        email: this.currentEmail,
+        message: `Switched to ${this.currentEmail}`
+      };
+
+    } catch (error) {
+      console.error("❌ Switch error:", error);
+      return {
+        success: false,
+        message: error.message,
+        email: null
+      };
+    }
+  }
+
+  /**
+   * Delete current email (FAST - just click delete button)
+   */
+  async deleteCurrentEmail() {
+    try {
+      console.log(`🗑️ Deleting email: ${this.currentEmail}`);
+      
+      if (!this.window) {
+        return {
+          success: false,
+          message: "No active session"
+        };
+      }
+
+      // Click delete button
+      await this.window.webContents.executeJavaScript(`
+        (function() {
+          const deleteBtn = document.querySelector('[wire\\\\:click="deleteEmail"]');
+          if (deleteBtn) {
+            deleteBtn.click();
+            return true;
+          }
+          return false;
+        })();
+      `);
+
+      // Wait for deletion
+      await new Promise(resolve => setTimeout(resolve, 1000));
+
+      const oldEmail = this.currentEmail;
+      this.currentEmail = null;
+
+      console.log(`✅ Deleted: ${oldEmail}`);
+
+      return {
+        success: true,
+        message: `Deleted ${oldEmail}`,
+        deletedEmail: oldEmail
+      };
+
+    } catch (error) {
+      console.error("❌ Delete error:", error);
+      return {
+        success: false,
+        message: error.message
+      };
+    }
+  }
 }
 
 module.exports = TempmailHeadless;

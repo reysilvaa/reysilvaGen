@@ -64,34 +64,49 @@ const TempmailTab = {
             </div>
 
             <div class="control-section">
-              <h3 class="section-title">Actions</h3>
+              <h3 class="section-title">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align: middle; margin-right: 6px;">
+                  <circle cx="12" cy="12" r="3"/>
+                  <path d="M12 1v6m0 6v6M5.6 5.6l4.2 4.2m4.2 4.2l4.2 4.2M1 12h6m6 0h6M5.6 18.4l4.2-4.2m4.2-4.2l4.2-4.2"/>
+                </svg>
+                Generate Email
+              </h3>
               
-              <div style="display: flex; gap: 12px; margin-bottom: 16px;">
-                <button class="btn btn-primary btn-large" id="new-email-btn" style="flex: 1;">
-                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="margin-right: 6px;">
+              <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 16px;">
+                <button class="btn btn-primary btn-large" id="new-email-btn">
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="margin-right: 6px;">
                     <rect x="3" y="3" width="18" height="18" rx="2" ry="2"/>
                     <line x1="12" y1="8" x2="12" y2="16"/>
                     <line x1="8" y1="12" x2="16" y2="12"/>
                   </svg>
                   New
                 </button>
-                <button class="btn btn-secondary btn-large" id="random-email-btn" style="flex: 1;">
-                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="margin-right: 6px;">
+                <button class="btn btn-secondary btn-large" id="random-email-btn">
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="margin-right: 6px;">
                     <path d="M21.5 2v6h-6M2.5 22v-6h6M2 11.5a10 10 0 0 1 18.8-4.3M22 12.5a10 10 0 0 1-18.8 4.2"/>
                   </svg>
                   Random
                 </button>
               </div>
 
-              <button class="btn btn-success btn-large" id="check-inbox-btn" disabled style="width: 100%;">
-                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="margin-right: 6px;">
-                  <polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/>
+              <h3 class="section-title" style="margin-top: 20px;">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align: middle; margin-right: 6px;">
+                  <polyline points="3 6 5 6 21 6"/>
+                  <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/>
                 </svg>
-                Check Inbox
+                Delete Email
+              </h3>
+
+              <button class="btn btn-danger btn-large" id="delete-email-btn" disabled title="Delete current email" style="width: 100%;">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="margin-right: 6px;">
+                  <polyline points="3 6 5 6 21 6"/>
+                  <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/>
+                </svg>
+                Delete Current Email
               </button>
 
-              <div class="auto-refresh-option">
-                <label class="checkbox-label">
+              <div class="auto-refresh-option" style="background: var(--bg-secondary); padding: 12px; border-radius: 8px; border: 1px solid var(--border-color);">
+                <label class="checkbox-label" style="margin: 0; cursor: pointer;">
                   <input type="checkbox" id="auto-refresh-checkbox" class="checkbox-input" />
                   <span class="checkbox-text">
                     <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align: middle; margin-right: 6px;">
@@ -106,9 +121,16 @@ const TempmailTab = {
 
           <!-- Inbox Panel -->
           <div class="output-panel">
-            <div class="output-header">
-              <h3>Inbox</h3>
-              <span id="inbox-count-badge" class="badge" style="background: var(--primary); color: white; padding: 4px 10px; border-radius: 12px; font-size: 12px; font-weight: 600;">0</span>
+            <div class="output-header" style="display: flex; align-items: center; justify-content: space-between; margin-bottom: var(--spacing-md);">
+              <div style="display: flex; align-items: center; gap: 12px;">
+                <h3 style="margin: 0;">Inbox</h3>
+                <span id="inbox-count-badge" class="badge" style="background: var(--primary); color: white; padding: 4px 10px; border-radius: 12px; font-size: 12px; font-weight: 600;">0</span>
+              </div>
+              <button class="btn-refresh-icon" id="check-inbox-btn" disabled title="Refresh inbox">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="M21.5 2v6h-6M2.5 22v-6h6M2 11.5a10 10 0 0 1 18.8-4.3M22 12.5a10 10 0 0 1-18.8 4.2"/>
+                </svg>
+              </button>
             </div>
             
             <!-- OTP Display (if found) -->
