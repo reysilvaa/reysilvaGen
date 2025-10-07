@@ -95,7 +95,7 @@
       "installerHeaderIcon": "assets/icon.ico",
       "artifactName": "${productName}-Setup-${version}.${ext}",
       "deleteAppDataOnUninstall": false,
-      "perMachineInstall": false,
+      "perMachine": false,
       "allowElevation": true,
       "differentialPackage": true,
       "packElevateHelper": false,
