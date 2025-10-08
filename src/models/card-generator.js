@@ -126,10 +126,16 @@ class CardGenerator {
         throw new Error("CVV length override must be 3 or 4 digits");
       }
       targetLength = lengthOverride;
-    } else if (cardType.toLowerCase() === "amex") {
-      targetLength = 4;
     } else {
-      targetLength = 3;
+      // Normalize card type to lowercase for comparison
+      const normalizedType = cardType.toLowerCase();
+      
+      // American Express uses 4-digit CVV
+      if (normalizedType === "amex" || normalizedType === "american express") {
+        targetLength = 4;
+      } else {
+        targetLength = 3;
+      }
     }
 
     let cvv = "";
@@ -196,13 +202,15 @@ class CardGenerator {
       yearsAhead = 5,
       expiryMonth = null,
       expiryYear = null,
+      cardType = null, // Allow card type override from database
     } = options;
 
     if (count <= 0) {
       throw new Error("Count must be a positive integer");
     }
 
-    const cardType = this.detectCardType(binPattern);
+    // Use provided cardType or detect from BIN pattern
+    const detectedCardType = cardType || this.detectCardType(binPattern);
     const uniqueNumbers = new Set();
     const cards = [];
     const maxAttempts = Math.max(count * 10, 1000);
@@ -226,7 +234,7 @@ class CardGenerator {
       }
       uniqueNumbers.add(number);
 
-      const cvv = this.generateCVV(cardType, cvvLength);
+      const cvv = this.generateCVV(detectedCardType, cvvLength);
       const expiry = fixedExpiry || this.generateExpiry(yearsAhead);
 
       cards.push({
@@ -234,6 +242,7 @@ class CardGenerator {
         cvv: cvv,
         exp_month: expiry.month,
         exp_year: expiry.year,
+        card_type: detectedCardType, // Include card type in result
       });
     }
 
@@ -247,11 +256,14 @@ class CardGenerator {
     const digits = binPattern.replace(/[^0-9]/g, "");
     if (!digits) return "unknown";
 
+    // Visa: starts with 4
     if (digits.startsWith("4")) {
       return "visa";
     }
 
     const firstTwo = digits.substring(0, 2);
+    
+    // Mastercard: 51-55 or 2221-2720
     if (["51", "52", "53", "54", "55"].includes(firstTwo)) {
       return "mastercard";
     }
@@ -263,16 +275,43 @@ class CardGenerator {
       }
     }
 
+    // American Express: 34 or 37
     if (["34", "37"].includes(firstTwo)) {
       return "amex";
     }
 
+    // Discover: 6011, 64, 65
     if (digits.length >= 4 && digits.substring(0, 4) === "6011") {
       return "discover";
     }
 
     if (["64", "65"].includes(firstTwo)) {
       return "discover";
+    }
+
+    // JCB: 3528-3589
+    if (digits.length >= 4) {
+      const firstFour = parseInt(digits.substring(0, 4));
+      if (firstFour >= 3528 && firstFour <= 3589) {
+        return "jcb";
+      }
+    }
+
+    // Diners Club: 36, 38, 300-305
+    if (["36", "38"].includes(firstTwo)) {
+      return "diners";
+    }
+
+    if (digits.length >= 3) {
+      const firstThree = parseInt(digits.substring(0, 3));
+      if (firstThree >= 300 && firstThree <= 305) {
+        return "diners";
+      }
+    }
+
+    // UnionPay: 62
+    if (firstTwo === "62") {
+      return "unionpay";
     }
 
     return "unknown";

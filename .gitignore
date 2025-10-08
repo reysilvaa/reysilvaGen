@@ -2,6 +2,17 @@
 dist/
 out/
 
+# Electron Builder Debug Files (keep latest.yml for release)
+dist/builder-debug.yml
+dist/builder-effective-config.yaml
+dist/win-unpacked/
+dist/linux-unpacked/
+dist/mac/
+dist/mac-arm64/
+
+# Electron Download Cache
+cache/
+
 # Node modules
 node_modules/
 
@@ -48,6 +59,7 @@ __pycache__/
 env/
 venv/
 *.egg-info/
+.env
 
 # Lock files (optional)
 # package-lock.json

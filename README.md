@@ -84,20 +84,27 @@ npm install
 npm start
 ```
 
-### Build Executable
+### Build Application
 
 ```bash
-# Windows
-npm run build:win
+# Build both Installer + Portable
+npm run build
 
-# macOS
-npm run build:mac
+# Build installer only
+npm run build:installer
 
-# Linux
-npm run build:linux
+# Build portable only
+npm run build:portable
+
+# Publish to GitHub Releases (auto-update)
+npm run publish
 ```
 
-Hasil build ada di folder `dist/`
+**Output:**
+- `ReysilvaGEN-Setup-2.0.1.exe` - NSIS installer dengan auto-update ✅
+- `ReysilvaGEN-2.0.1-Portable.exe` - Portable, single file, no install 🎯
+
+> **Note**: Lihat [BUILD_GUIDE.md](BUILD_GUIDE.md) untuk panduan lengkap dan [AUTO_UPDATE_GUIDE.md](AUTO_UPDATE_GUIDE.md) untuk setup auto-update.
 
 ## 📁 Project Structure
 
@@ -253,9 +260,12 @@ card_number,exp_month,exp_year,cvv
 ## 🔧 Technical Stack
 
 - **Electron 28** - Cross-platform desktop framework
+- **electron-builder** - Build installer & portable with auto-update
+- **electron-updater** - Auto-update from GitHub Releases
 - **HTML5/CSS3** - Modern UI
 - **JavaScript ES6+** - Clean modular code
-- **No external dependencies** - All generators are local!
+- **SQLite-like Config** - JSON-based configuration
+- **No external API dependencies** - All generators are local!
 
 ## 🎯 Card Types Supported
 

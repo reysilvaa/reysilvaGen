@@ -1,0 +1,217 @@
+name: Build & Release
+
+on:
+  push:
+    tags:
+      - 'v*'
+  workflow_dispatch:
+    inputs:
+      platform:
+        description: 'Platform to build'
+        required: true
+        default: 'windows'
+        type: choice
+        options:
+          - windows
+          - macos
+          - linux
+          - all
+
+env:
+  CSC_IDENTITY_AUTO_DISCOVERY: false
+
+jobs:
+  # ============================================
+  # Windows Build (Unsigned)
+  # ============================================
+  build-windows:
+    name: Build Windows
+    runs-on: windows-latest
+    if: |
+      (github.event_name == 'push' && startsWith(github.ref, 'refs/tags/v')) ||
+      (github.event_name == 'workflow_dispatch' && (github.event.inputs.platform == 'windows' || github.event.inputs.platform == 'all'))
+    
+    steps:
+      - name: 📥 Checkout Code
+        uses: actions/checkout@v4
+      
+      - name: 🟢 Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+      
+      - name: 📦 Install Dependencies
+        run: npm ci
+      
+      - name: 🔨 Build Electron App
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: npm run build
+      
+      - name: 📤 Upload Build Artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: windows-installer
+          path: |
+            dist/*.exe
+            dist/latest.yml
+          retention-days: 7
+      
+      - name: 📋 List Build Output
+        run: dir dist
+
+  # ============================================
+  # macOS Build
+  # ============================================
+  build-macos:
+    name: Build macOS
+    runs-on: macos-latest
+    if: |
+      github.event_name == 'workflow_dispatch' && 
+      (github.event.inputs.platform == 'macos' || github.event.inputs.platform == 'all')
+    
+    steps:
+      - name: 📥 Checkout Code
+        uses: actions/checkout@v4
+      
+      - name: 🟢 Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+      
+      - name: 📦 Install Dependencies
+        run: npm ci
+      
+      - name: 🔨 Build Electron App
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: npm run build:mac
+      
+      - name: 📤 Upload Build Artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: macos-installer
+          path: |
+            dist/*.dmg
+            dist/*.zip
+            dist/latest-mac.yml
+          retention-days: 7
+
+  # ============================================
+  # Linux Build
+  # ============================================
+  build-linux:
+    name: Build Linux
+    runs-on: ubuntu-latest
+    if: |
+      github.event_name == 'workflow_dispatch' && 
+      (github.event.inputs.platform == 'linux' || github.event.inputs.platform == 'all')
+    
+    steps:
+      - name: 📥 Checkout Code
+        uses: actions/checkout@v4
+      
+      - name: 🟢 Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+      
+      - name: 📦 Install Dependencies
+        run: npm ci
+      
+      - name: 🔨 Build Electron App
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: npm run build:linux
+      
+      - name: 📤 Upload Build Artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: linux-installer
+          path: |
+            dist/*.AppImage
+            dist/*.tar.gz
+            dist/latest-linux.yml
+          retention-days: 7
+
+  # ============================================
+  # Create GitHub Release
+  # ============================================
+  release:
+    name: Create Release
+    needs: [build-windows]
+    runs-on: ubuntu-latest
+    if: github.event_name == 'push' && startsWith(github.ref, 'refs/tags/v')
+    
+    steps:
+      - name: 📥 Download Windows Artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: windows-installer
+          path: release-files
+      
+      - name: 📋 List Release Files
+        run: ls -lah release-files/
+      
+      - name: 🚀 Create GitHub Release
+        uses: softprops/action-gh-release@v1
+        with:
+          files: release-files/*
+          draft: false
+          prerelease: false
+          generate_release_notes: true
+          body: |
+            ## 📦 Downloads
+            
+            **Installer (Recommended):**
+            - `reysilvaGen-Setup-*.exe` - NSIS Installer dengan auto-update
+            
+            **Portable:**
+            - `reysilvaGen-*-Portable.exe` - Single file, no installation
+            
+            **Files for Auto-Update:**
+            - `latest.yml` - Required for auto-update functionality
+            
+            ## 🔄 Auto-Update
+            
+            Jika sudah install versi sebelumnya, aplikasi akan otomatis update!
+            
+            ## ⚠️ Windows SmartScreen Warning
+            
+            Karena app unsigned, Windows akan tampilkan warning:
+            1. Klik **"More info"**
+            2. Klik **"Run anyway"**
+            
+            This is normal for unsigned applications.
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+  # ============================================
+  # Publish to GitHub (Manual)
+  # ============================================
+  publish:
+    name: Publish to GitHub
+    runs-on: windows-latest
+    if: github.event_name == 'workflow_dispatch' && github.event.inputs.platform == 'windows'
+    
+    steps:
+      - name: 📥 Checkout Code
+        uses: actions/checkout@v4
+      
+      - name: 🟢 Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+      
+      - name: 📦 Install Dependencies
+        run: npm ci
+      
+      - name: 🚀 Build & Publish
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: npm run publish
+

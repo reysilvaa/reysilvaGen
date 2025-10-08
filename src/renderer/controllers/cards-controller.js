@@ -13,8 +13,13 @@ function initCardsTab() {
   const clearBtn = document.getElementById("clear-btn");
 
   generateBtn?.addEventListener("click", async () => {
-    const binPattern = document.getElementById("bin-select").value.trim();
+    const binSelect = document.getElementById("bin-select");
+    const binPattern = binSelect.value.trim();
     if (!binPattern) return utils.showError("Please select a BIN pattern");
+
+    // Get card type from data attribute if available
+    const selectedOption = binSelect.options[binSelect.selectedIndex];
+    const cardTypeFromDB = selectedOption?.getAttribute("data-card-type");
 
     const count = parseInt(document.getElementById("card-count").value);
     const length =
@@ -34,6 +39,7 @@ function initCardsTab() {
       length,
       cvvLength,
       yearsAhead,
+      cardType: cardTypeFromDB, // Pass card type from database
     });
 
     const format = document.getElementById("output-format").value;
@@ -44,9 +50,11 @@ function initCardsTab() {
       // Card Visual Format
       cards.forEach((card, index) => {
         const expiry = `${card.exp_month}/${card.exp_year}`;
-        const cardType = generator.detectCardType(binPattern).toLowerCase();
+        // Use card_type from the generated card
+        const cardType = (card.card_type || "unknown").toLowerCase();
         const cardClass = `card-${cardType}`;
         const formattedNumber = card.number.match(/.{1,4}/g).join(" ");
+        const displayCardType = cardTypeFromDB || card.card_type || "UNKNOWN";
 
         html += `
           <div class="card-item ${cardClass}" data-number="${
@@ -55,9 +63,7 @@ function initCardsTab() {
             <div class="card-inner">
               <div class="card-item-header">
                 <span class="card-item-number">CARD #${index + 1}</span>
-                <span class="card-logo">${generator
-                  .detectCardType(binPattern)
-                  .toUpperCase()}</span>
+                <span class="card-logo">${displayCardType.toUpperCase()}</span>
               </div>
               
               <div class="card-chip"></div>
@@ -120,10 +126,9 @@ function initCardsTab() {
     document.getElementById("cards-generated").textContent = `${count} cards`;
 
     utils.hideLoading();
+    const displayType = cardTypeFromDB || cards[0]?.card_type || "UNKNOWN";
     utils.showSuccess(
-      `Generated ${count} ${generator
-        .detectCardType(binPattern)
-        .toUpperCase()} cards!`
+      `Generated ${count} ${displayType.toUpperCase()} cards!`
     );
   });
 

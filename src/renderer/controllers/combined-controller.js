@@ -26,10 +26,13 @@ function initCombinedTab() {
   const generateBtn = document.getElementById("generate-combined-btn");
 
   generateBtn?.addEventListener("click", async () => {
-    const binPattern = document
-      .getElementById("combined-bin-select")
-      .value.trim();
+    const binSelect = document.getElementById("combined-bin-select");
+    const binPattern = binSelect.value.trim();
     if (!binPattern) return utils.showError("Please select a BIN pattern");
+
+    // Get card type from data attribute if available
+    const selectedOption = binSelect.options[binSelect.selectedIndex];
+    const cardTypeFromDB = selectedOption?.getAttribute("data-card-type");
 
     const count = parseInt(document.getElementById("combined-count").value);
 
@@ -39,6 +42,7 @@ function initCombinedTab() {
     const cards = generator.generateBulk(binPattern, count, {
       length: null,
       yearsAhead: 5,
+      cardType: cardTypeFromDB, // Pass card type from database
     });
     const address = addressGenerator.generate({
       includeName: true,

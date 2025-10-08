@@ -50,7 +50,8 @@
       .forEach((type) => {
         html += `<optgroup label="${type}">`;
         binsByType[type].forEach((bin) => {
-          html += `<option value="${bin.bin_pattern}">${type}</option>`;
+          const description = bin.description ? ` - ${bin.description}` : '';
+          html += `<option value="${bin.bin_pattern}" data-card-type="${bin.card_type}">${bin.bin_pattern}${description}</option>`;
         });
         html += `</optgroup>`;
       });

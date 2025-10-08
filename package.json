@@ -3,15 +3,18 @@
   "version": "2.0.1",
   "description": "Modern Test Card Generator & Address Fetcher with Admin Panel - Built with Electron",
   "main": "src/main/main.js",
+  "productName": "reysilvaGen",
   "scripts": {
     "start": "electron .",
     "dev": "electron . --dev",
-    "build": "npm run clean && electron-builder --win --x64",
-    "build:win": "npm run clean && electron-builder --win --x64",
-    "build:mac": "npm run clean && electron-builder --mac",
-    "build:linux": "npm run clean && electron-builder --linux",
-    "clean": "rm -rf dist",
-    "postinstall": "electron-builder install-app-deps"
+    "clean": "rimraf dist",
+    "build": "set CSC_IDENTITY_AUTO_DISCOVERY=false && electron-builder --win --x64",
+    "build:installer": "set CSC_IDENTITY_AUTO_DISCOVERY=false && electron-builder --win --x64 --config.win.target=nsis",
+    "build:portable": "set CSC_IDENTITY_AUTO_DISCOVERY=false && electron-builder --win --x64 --config.win.target=portable",
+    "build:all": "set CSC_IDENTITY_AUTO_DISCOVERY=false && electron-builder --win --x64",
+    "build:mac": "electron-builder --mac",
+    "build:linux": "electron-builder --linux",
+    "publish": "set CSC_IDENTITY_AUTO_DISCOVERY=false && electron-builder --win --x64 --publish always"
   },
   "keywords": [
     "card-generator",
@@ -24,20 +27,23 @@
   "devDependencies": {
     "electron": "^28.0.0",
     "electron-builder": "^24.9.1",
-    "electron-rebuild": "^3.2.9"
+    "electron-rebuild": "^3.2.9",
+    "rimraf": "^5.0.10"
   },
   "dependencies": {
     "axios": "^1.6.2",
-    "builder-util-runtime": "^9.2.4",
     "electron-updater": "^6.1.7",
     "smart-buffer": "^4.2.0"
   },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/reysilva/reysilvaGen.git"
+  },
   "build": {
     "appId": "com.reysilva.reysilvagen",
-    "productName": "ReysilvaGEN",
+    "productName": "reysilvaGen",
     "directories": {
-      "output": "dist",
-      "buildResources": "assets"
+      "output": "dist"
     },
     "files": [
       "src/**/*",
@@ -47,26 +53,10 @@
     ],
     "compression": "maximum",
     "asar": true,
-    "asarUnpack": [
-      "assets/**/*",
-      "node_modules/builder-util-runtime/**/*"
-    ],
-    "extraResources": [
-      {
-        "from": "assets/address",
-        "to": "address"
-      },
-      {
-        "from": "assets/icon.ico",
-        "to": "icon.ico"
-      }
-    ],
-    "publish": {
-      "provider": "github",
-      "owner": "reysilva",
-      "repo": "reysilvagen",
-      "releaseType": "release"
+    "electronDownload": {
+      "cache": "./cache"
     },
+    "forceCodeSigning": false,
     "win": {
       "target": [
         {
@@ -74,46 +64,84 @@
           "arch": [
             "x64"
           ]
+        },
+        {
+          "target": "portable",
+          "arch": [
+            "x64"
+          ]
         }
       ],
       "icon": "assets/icon.ico",
       "publisherName": "Reysilva",
+      "artifactName": "${productName}-${version}-${os}-${arch}.${ext}",
+      "sign": null,
+      "signingHashAlgorithms": null,
       "verifyUpdateCodeSignature": false,
-      "signAndEditExecutable": false,
       "signDlls": false,
-      "requestedExecutionLevel": "requireAdministrator"
+      "signAndEditExecutable": false
+    },
+    "portable": {
+      "artifactName": "${productName}-${version}-Portable.${ext}"
     },
     "nsis": {
       "oneClick": false,
       "allowToChangeInstallationDirectory": true,
       "createDesktopShortcut": true,
       "createStartMenuShortcut": true,
-      "shortcutName": "ReysilvaGEN",
+      "shortcutName": "reysilvaGen",
       "installerIcon": "assets/icon.ico",
       "uninstallerIcon": "assets/icon.ico",
-      "installerHeaderIcon": "assets/icon.ico",
       "artifactName": "${productName}-Setup-${version}.${ext}",
       "deleteAppDataOnUninstall": false,
       "perMachine": false,
-      "allowElevation": true,
-      "differentialPackage": true,
-      "packElevateHelper": false,
-      "warningsAsErrors": false,
       "include": null,
-      "menuCategory": true,
-      "runAfterFinish": true
+      "warningsAsErrors": false
     },
     "mac": {
       "target": [
-        "dmg"
+        {
+          "target": "dmg",
+          "arch": [
+            "x64",
+            "arm64"
+          ]
+        },
+        {
+          "target": "zip",
+          "arch": [
+            "x64",
+            "arm64"
+          ]
+        }
       ],
-      "category": "public.app-category.developer-tools"
+      "category": "public.app-category.developer-tools",
+      "icon": "assets/icon.icns"
     },
     "linux": {
       "target": [
-        "AppImage"
+        {
+          "target": "AppImage",
+          "arch": [
+            "x64"
+          ]
+        },
+        {
+          "target": "tar.gz",
+          "arch": [
+            "x64"
+          ]
+        }
       ],
       "category": "Development"
-    }
+    },
+    "publish": [
+      {
+        "provider": "github",
+        "owner": "reysilva",
+        "repo": "reysilvaGen",
+        "releaseType": "release"
+      }
+    ]
   }
 }
