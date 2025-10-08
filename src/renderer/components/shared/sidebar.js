@@ -72,7 +72,7 @@ const Sidebar = {
             <!-- Update status will be displayed here -->
           </div>
           <div style="font-size: 11px; color: var(--text-muted); text-align: center">
-            v2.0.1 | Developed by Reysilva
+            v2.0.2 | Developed by Reysilva
           </div>
           <div style="margin-top: 8px; color: var(--danger); text-align: center; font-size: 10px;">
             ⚠️ Development Only

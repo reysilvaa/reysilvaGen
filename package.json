@@ -1,6 +1,6 @@
 {
   "name": "reysilvagen-desktop",
-  "version": "2.0.1",
+  "version": "2.0.2",
   "description": "Modern Test Card Generator & Address Fetcher with Admin Panel - Built with Electron",
   "main": "src/main/main.js",
   "productName": "reysilvaGen",
