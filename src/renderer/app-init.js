@@ -70,6 +70,101 @@
     }
   };
 
+  // ============= Auto Update =============
+  function initAutoUpdater() {
+    const checkUpdateBtn = document.getElementById("check-update-btn");
+    const updateStatus = document.getElementById("update-status");
+
+    if (!checkUpdateBtn || !updateStatus) return;
+
+    // Listen to auto-updater events
+    window.electron.autoUpdater.onUpdateChecking(() => {
+      updateStatus.style.display = "block";
+      updateStatus.style.color = "var(--text-muted)";
+      updateStatus.innerHTML = "🔍 Checking for updates...";
+      checkUpdateBtn.disabled = true;
+    });
+
+    window.electron.autoUpdater.onUpdateAvailable((info) => {
+      updateStatus.style.display = "block";
+      updateStatus.style.color = "var(--success)";
+      updateStatus.innerHTML = `✨ Update ${info.version} available!`;
+      checkUpdateBtn.textContent = "Download Update";
+      checkUpdateBtn.disabled = false;
+      
+      // Change button action to download
+      checkUpdateBtn.onclick = () => {
+        window.electron.autoUpdater.downloadUpdate();
+        checkUpdateBtn.disabled = true;
+        checkUpdateBtn.innerHTML = `
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align: middle; margin-right: 4px">
+            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M7 10l5 5 5-5M12 15V3"/>
+          </svg>
+          Downloading...
+        `;
+      };
+    });
+
+    window.electron.autoUpdater.onUpdateNotAvailable(() => {
+      updateStatus.style.display = "block";
+      updateStatus.style.color = "var(--success)";
+      updateStatus.innerHTML = "✅ You're up to date!";
+      checkUpdateBtn.disabled = false;
+      
+      setTimeout(() => {
+        updateStatus.style.display = "none";
+      }, 3000);
+    });
+
+    window.electron.autoUpdater.onDownloadProgress((progress) => {
+      updateStatus.style.display = "block";
+      updateStatus.style.color = "var(--primary)";
+      updateStatus.innerHTML = `📥 Downloading: ${Math.round(progress.percent)}%`;
+    });
+
+    window.electron.autoUpdater.onUpdateDownloaded((info) => {
+      updateStatus.style.display = "block";
+      updateStatus.style.color = "var(--success)";
+      updateStatus.innerHTML = `✅ Update ${info.version} ready!`;
+      checkUpdateBtn.innerHTML = `
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align: middle; margin-right: 4px">
+          <path d="M21.5 2v6h-6M2.5 22v-6h6M2 11.5a10 10 0 0 1 18.8-4.3M22 12.5a10 10 0 0 1-18.8 4.2"/>
+        </svg>
+        Restart to Update
+      `;
+      checkUpdateBtn.disabled = false;
+      
+      // Change button action to install
+      checkUpdateBtn.onclick = () => {
+        window.electron.autoUpdater.installUpdate();
+      };
+    });
+
+    window.electron.autoUpdater.onError((error) => {
+      updateStatus.style.display = "block";
+      updateStatus.style.color = "var(--danger)";
+      updateStatus.innerHTML = `❌ Update failed: ${error.message || 'Unknown error'}`;
+      checkUpdateBtn.disabled = false;
+      checkUpdateBtn.innerHTML = `
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align: middle; margin-right: 4px">
+          <path d="M21.5 2v6h-6M2.5 22v-6h6M2 11.5a10 10 0 0 1 18.8-4.3M22 12.5a10 10 0 0 1-18.8 4.2"/>
+        </svg>
+        Check for Updates
+      `;
+      
+      setTimeout(() => {
+        updateStatus.style.display = "none";
+      }, 5000);
+    });
+
+    // Button click handler
+    checkUpdateBtn.addEventListener("click", () => {
+      if (!checkUpdateBtn.disabled) {
+        window.electron.autoUpdater.checkForUpdates();
+      }
+    });
+  }
+
   // ============= Navigation =============
   function initNavigation() {
     const navItems = document.querySelectorAll(".nav-item");
@@ -108,6 +203,7 @@
     window.TempmailInit?.init();
     
     initNavigation();
+    initAutoUpdater();
 
     console.log("✅ App ready!");
   }
