@@ -4,6 +4,7 @@ on:
   push:
     tags:
       - 'v*'
+      - '*.*.*'
   workflow_dispatch:
     inputs:
       platform:
@@ -30,7 +31,7 @@ jobs:
     permissions:
       contents: write
     if: |
-      (github.event_name == 'push' && startsWith(github.ref, 'refs/tags/v')) ||
+      (github.event_name == 'push' && startsWith(github.ref, 'refs/tags/')) ||
       (github.event_name == 'workflow_dispatch' && (github.event.inputs.platform == 'windows' || github.event.inputs.platform == 'all'))
     
     steps:
@@ -69,9 +70,11 @@ jobs:
   build-macos:
     name: Build macOS
     runs-on: macos-latest
+    permissions:
+      contents: write
     if: |
-      github.event_name == 'workflow_dispatch' && 
-      (github.event.inputs.platform == 'macos' || github.event.inputs.platform == 'all')
+      (github.event_name == 'push' && startsWith(github.ref, 'refs/tags/')) ||
+      (github.event_name == 'workflow_dispatch' && (github.event.inputs.platform == 'macos' || github.event.inputs.platform == 'all'))
     
     steps:
       - name: 📥 Checkout Code
@@ -107,9 +110,11 @@ jobs:
   build-linux:
     name: Build Linux
     runs-on: ubuntu-latest
+    permissions:
+      contents: write
     if: |
-      github.event_name == 'workflow_dispatch' && 
-      (github.event.inputs.platform == 'linux' || github.event.inputs.platform == 'all')
+      (github.event_name == 'push' && startsWith(github.ref, 'refs/tags/')) ||
+      (github.event_name == 'workflow_dispatch' && (github.event.inputs.platform == 'linux' || github.event.inputs.platform == 'all'))
     
     steps:
       - name: 📥 Checkout Code
@@ -148,7 +153,7 @@ jobs:
     runs-on: ubuntu-latest
     permissions:
       contents: write
-    if: github.event_name == 'push' && startsWith(github.ref, 'refs/tags/v')
+    if: github.event_name == 'push' && startsWith(github.ref, 'refs/tags/')
     
     steps:
       - name: 📥 Download Windows Artifacts
