@@ -207,7 +207,6 @@
       }
     },
     "appImage": {
-      "license": "MIT",
       "artifactName": "${productName}-${version}-${os}-${arch}.${ext}"
     },
     "deb": {
