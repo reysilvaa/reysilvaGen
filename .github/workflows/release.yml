@@ -144,7 +144,7 @@ jobs:
   # ============================================
   release:
     name: Create Release
-    needs: [build-windows]
+    needs: [build-windows, build-macos, build-linux]
     runs-on: ubuntu-latest
     permissions:
       contents: write
@@ -157,6 +157,20 @@ jobs:
           name: windows-installer
           path: release-files
       
+      - name: 📥 Download macOS Artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: macos-installer
+          path: release-files
+        continue-on-error: true
+      
+      - name: 📥 Download Linux Artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: linux-installer
+          path: release-files
+        continue-on-error: true
+      
       - name: 📋 List Release Files
         run: ls -lah release-files/
       
@@ -168,28 +182,74 @@ jobs:
           prerelease: false
           generate_release_notes: true
           body: |
-            ## 📦 Downloads
+            ## 📦 Downloads by Platform
             
+            ### 🪟 Windows
             **Installer (Recommended):**
-            - `reysilvaGen-Setup-*.exe` - NSIS Installer dengan auto-update
+            - `reysilvaGen-Setup-*.exe` - NSIS Installer with auto-update
             
             **Portable:**
-            - `reysilvaGen-*-Portable.exe` - Single file, no installation
+            - `reysilvaGen-*-Portable.exe` - No installation required
             
-            **Files for Auto-Update:**
-            - `latest.yml` - Required for auto-update functionality
+            **Auto-Update:**
+            - `latest.yml` - Auto-update manifest
+            
+            ---
+            
+            ### 🍎 macOS
+            **Installer (DMG):**
+            - `reysilvaGen-*-mac-x64.dmg` - Intel Macs (x64)
+            - `reysilvaGen-*-mac-arm64.dmg` - Apple Silicon (M1/M2/M3)
+            
+            **Portable (ZIP):**
+            - `reysilvaGen-*-mac-x64.zip` - Intel Macs
+            - `reysilvaGen-*-mac-arm64.zip` - Apple Silicon
+            
+            **Auto-Update:**
+            - `latest-mac.yml` - Auto-update manifest
+            
+            ---
+            
+            ### 🐧 Linux
+            **AppImage (Universal):**
+            - `reysilvaGen-*-linux-x64.AppImage` - Works on all distros
+            
+            **Package Managers:**
+            - `reysilvaGen-*-linux-x64.deb` - Debian/Ubuntu/Mint
+            - `reysilvaGen-*-linux-x64.rpm` - Fedora/RHEL/CentOS
+            
+            **Portable:**
+            - `reysilvaGen-*-linux-x64.tar.gz` - Generic tarball
+            
+            **Auto-Update:**
+            - `latest-linux.yml` - Auto-update manifest
+            
+            ---
             
             ## 🔄 Auto-Update
             
-            Jika sudah install versi sebelumnya, aplikasi akan otomatis update!
+            All installer versions support automatic updates. The app will check for new versions and download them in the background.
             
-            ## ⚠️ Windows SmartScreen Warning
+            ---
             
-            Karena app unsigned, Windows akan tampilkan warning:
-            1. Klik **"More info"**
-            2. Klik **"Run anyway"**
+            ## ⚠️ Platform-Specific Notes
             
-            This is normal for unsigned applications.
+            ### Windows
+            - **SmartScreen Warning:** App is unsigned, you may see a warning
+              1. Click **"More info"**
+              2. Click **"Run anyway"**
+            
+            ### macOS
+            - **Gatekeeper Warning:** App is unsigned
+              1. Right-click the app → **Open**
+              2. Click **"Open"** in the dialog
+              - Or: System Preferences → Security & Privacy → **"Open Anyway"**
+            
+            ### Linux
+            - **AppImage:** Make executable with `chmod +x reysilvaGen-*.AppImage` then run
+            - **DEB:** Install with `sudo dpkg -i reysilvaGen-*.deb` or double-click
+            - **RPM:** Install with `sudo rpm -i reysilvaGen-*.rpm` or double-click
+            - **TAR.GZ:** Extract and run the binary inside
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
