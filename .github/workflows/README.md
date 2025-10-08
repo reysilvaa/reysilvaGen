@@ -42,7 +42,7 @@ git push origin v2.0.2
 **Trigger:** Manual dari GitHub UI
 
 **How to trigger:**
-1. Buka: https://github.com/reysilva/reysilvaGen/actions
+1. Buka: https://github.com/reysilvaa/reysilvaGen/actions
 2. Pilih **"Build & Release"**
 3. Klik **"Run workflow"**
 4. Pilih platform:
@@ -134,15 +134,15 @@ git commit -m "Bump version to 2.0.2"
 git push origin v2.0.2
 
 # 4. Wait for GitHub Actions
-# Check: https://github.com/reysilva/reysilvaGen/actions
+# Check: https://github.com/reysilvaa/reysilvaGen/actions
 
 # 5. Download from Releases
-# https://github.com/reysilva/reysilvaGen/releases
+# https://github.com/reysilvaa/reysilvaGen/releases
 ```
 
 ### Manual Build (Testing)
 
-1. Go to: https://github.com/reysilva/reysilvaGen/actions
+1. Go to: https://github.com/reysilvaa/reysilvaGen/actions
 2. Click **"Build & Release"**
 3. Click **"Run workflow"**
 4. Select:
@@ -172,7 +172,7 @@ git push origin v2.0.2
 
 ### Check Build Status:
 ```
-https://github.com/reysilva/reysilvaGen/actions
+https://github.com/reysilvaa/reysilvaGen/actions
 ```
 
 ### Status Badges:
