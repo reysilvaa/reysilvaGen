@@ -13,7 +13,7 @@ function initAddressTab() {
   // Load CSV data
   async function loadCSV() {
     try {
-      await csvLoader.load("../assets/address/us-US.csv");
+      await csvLoader.load("us-US.csv");
       csvLoaded = true;
       console.log(`✅ CSV loaded: ${csvLoader.getCount()} addresses`);
     } catch (error) {

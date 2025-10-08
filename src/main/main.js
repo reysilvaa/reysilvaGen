@@ -192,6 +192,18 @@ ipcMain.handle("get-active-bins", async (event) => {
   }
 });
 
+ipcMain.handle("load-csv", async (event, filename) => {
+  try {
+    const fs = require('fs');
+    const csvPath = path.join(__dirname, '../../assets/address', filename);
+    const csvData = fs.readFileSync(csvPath, 'utf-8');
+    return { success: true, data: csvData };
+  } catch (error) {
+    console.error('Error loading CSV:', error);
+    return { success: false, error: error.message };
+  }
+});
+
 ipcMain.handle(
   "add-bin",
   async (event, { binPattern, cardType, description, createdBy }) => {

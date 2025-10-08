@@ -239,9 +239,9 @@
           .getElementById("bin-description")
           .value.trim();
 
-        if (!/^[0-9]{6,9}$/.test(binPattern)) {
+        if (!/^[0-9]{6,16}$/.test(binPattern)) {
           const err = document.getElementById("bin-error");
-          err.textContent = "BIN must be 6-9 digits";
+          err.textContent = "BIN must be 6-16 digits";
           err.style.display = "block";
           setTimeout(() => (err.style.display = "none"), 5000);
           return;

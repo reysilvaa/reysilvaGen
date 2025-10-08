@@ -58,3 +58,8 @@ contextBridge.exposeInMainWorld("autoUpdater", {
   onUpdateDownloaded: (callback) => ipcRenderer.on("update-downloaded", (_, info) => callback(info)),
   onUpdateError: (callback) => ipcRenderer.on("update-error", (_, error) => callback(error)),
 });
+
+// CSV Loader API
+contextBridge.exposeInMainWorld("csvLoader", {
+  loadCSV: (filename) => ipcRenderer.invoke("load-csv", filename),
+});

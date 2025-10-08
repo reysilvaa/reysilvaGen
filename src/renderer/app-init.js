@@ -75,17 +75,10 @@
     const checkUpdateBtn = document.getElementById("check-update-btn");
     const updateStatus = document.getElementById("update-status");
 
-    if (!checkUpdateBtn || !updateStatus) return;
+    if (!checkUpdateBtn || !updateStatus || !window.autoUpdater) return;
 
     // Listen to auto-updater events
-    window.electron.autoUpdater.onUpdateChecking(() => {
-      updateStatus.style.display = "block";
-      updateStatus.style.color = "var(--text-muted)";
-      updateStatus.innerHTML = "🔍 Checking for updates...";
-      checkUpdateBtn.disabled = true;
-    });
-
-    window.electron.autoUpdater.onUpdateAvailable((info) => {
+    window.autoUpdater.onUpdateAvailable((info) => {
       updateStatus.style.display = "block";
       updateStatus.style.color = "var(--success)";
       updateStatus.innerHTML = `✨ Update ${info.version} available!`;
@@ -94,7 +87,7 @@
       
       // Change button action to download
       checkUpdateBtn.onclick = () => {
-        window.electron.autoUpdater.downloadUpdate();
+        window.autoUpdater.downloadUpdate();
         checkUpdateBtn.disabled = true;
         checkUpdateBtn.innerHTML = `
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align: middle; margin-right: 4px">
@@ -105,24 +98,13 @@
       };
     });
 
-    window.electron.autoUpdater.onUpdateNotAvailable(() => {
-      updateStatus.style.display = "block";
-      updateStatus.style.color = "var(--success)";
-      updateStatus.innerHTML = "✅ You're up to date!";
-      checkUpdateBtn.disabled = false;
-      
-      setTimeout(() => {
-        updateStatus.style.display = "none";
-      }, 3000);
-    });
-
-    window.electron.autoUpdater.onDownloadProgress((progress) => {
+    window.autoUpdater.onDownloadProgress((progress) => {
       updateStatus.style.display = "block";
       updateStatus.style.color = "var(--primary)";
       updateStatus.innerHTML = `📥 Downloading: ${Math.round(progress.percent)}%`;
     });
 
-    window.electron.autoUpdater.onUpdateDownloaded((info) => {
+    window.autoUpdater.onUpdateDownloaded((info) => {
       updateStatus.style.display = "block";
       updateStatus.style.color = "var(--success)";
       updateStatus.innerHTML = `✅ Update ${info.version} ready!`;
@@ -136,11 +118,11 @@
       
       // Change button action to install
       checkUpdateBtn.onclick = () => {
-        window.electron.autoUpdater.installUpdate();
+        window.autoUpdater.installUpdate();
       };
     });
 
-    window.electron.autoUpdater.onError((error) => {
+    window.autoUpdater.onUpdateError((error) => {
       updateStatus.style.display = "block";
       updateStatus.style.color = "var(--danger)";
       updateStatus.innerHTML = `❌ Update failed: ${error.message || 'Unknown error'}`;
@@ -158,9 +140,25 @@
     });
 
     // Button click handler
-    checkUpdateBtn.addEventListener("click", () => {
+    checkUpdateBtn.addEventListener("click", async () => {
       if (!checkUpdateBtn.disabled) {
-        window.electron.autoUpdater.checkForUpdates();
+        updateStatus.style.display = "block";
+        updateStatus.style.color = "var(--text-muted)";
+        updateStatus.innerHTML = "🔍 Checking for updates...";
+        checkUpdateBtn.disabled = true;
+        
+        const result = await window.autoUpdater.checkForUpdates();
+        
+        if (result && !result.success) {
+          updateStatus.style.display = "block";
+          updateStatus.style.color = "var(--success)";
+          updateStatus.innerHTML = "✅ You're up to date!";
+          checkUpdateBtn.disabled = false;
+          
+          setTimeout(() => {
+            updateStatus.style.display = "none";
+          }, 3000);
+        }
       }
     });
   }
