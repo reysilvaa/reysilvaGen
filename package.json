@@ -37,10 +37,10 @@
   },
   "repository": {
     "type": "git",
-    "url": "https://github.com/reysilva/reysilvaGen.git"
+    "url": "https://github.com/reysilvaa/reysilvaGen.git"
   },
   "build": {
-    "appId": "com.reysilva.reysilvagen",
+    "appId": "com.reysilvaa.reysilvagen",
     "productName": "reysilvaGen",
     "directories": {
       "output": "dist"
@@ -138,7 +138,7 @@
     "publish": [
       {
         "provider": "github",
-        "owner": "reysilva",
+        "owner": "reysilvaa",
         "repo": "reysilvaGen",
         "releaseType": "release"
       }
