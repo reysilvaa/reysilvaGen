@@ -11,10 +11,10 @@
     "build": "set CSC_IDENTITY_AUTO_DISCOVERY=false && electron-builder --win --x64",
     "build:installer": "set CSC_IDENTITY_AUTO_DISCOVERY=false && electron-builder --win --x64 --config.win.target=nsis",
     "build:portable": "set CSC_IDENTITY_AUTO_DISCOVERY=false && electron-builder --win --x64 --config.win.target=portable",
-    "build:all": "set CSC_IDENTITY_AUTO_DISCOVERY=false && electron-builder --win --x64",
+    "build:all": "set CSC_IDENTITY_AUTO_DISCOVERY=false && electron-builder --win --mac --linux",
     "build:mac": "electron-builder --mac",
     "build:linux": "electron-builder --linux",
-    "publish": "set CSC_IDENTITY_AUTO_DISCOVERY=false && electron-builder --win --x64 --publish always"
+    "publish": "set CSC_IDENTITY_AUTO_DISCOVERY=false && electron-builder --win --mac --linux --publish always"
   },
   "keywords": [
     "card-generator",
@@ -101,8 +101,6 @@
       "deleteAppDataOnUninstall": false,
       "perMachine": false,
       "displayLanguageSelector": false,
-      "installerLanguages": ["en_US"],
-      "language": "en_US",
       "include": "build/windows-installer.nsh",
       "warningsAsErrors": false
     },
