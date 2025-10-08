@@ -103,7 +103,7 @@
       "displayLanguageSelector": false,
       "installerLanguages": ["en_US"],
       "language": "en_US",
-      "include": "build/installer.nsh",
+      "include": "build/windows-installer.nsh",
       "warningsAsErrors": false
     },
     "mac": {
@@ -129,13 +129,16 @@
       "darkModeSupport": true,
       "hardenedRuntime": false,
       "gatekeeperAssess": false,
+      "entitlements": "build/macos-entitlements.plist",
+      "entitlementsInherit": "build/macos-entitlements-inherit.plist",
       "type": "distribution",
       "extendInfo": {
         "LSApplicationCategoryType": "public.app-category.developer-tools",
         "CFBundleDisplayName": "reysilvaGen",
         "CFBundleName": "reysilvaGen",
         "CFBundleIdentifier": "com.reysilvaa.reysilvagen",
-        "NSHumanReadableCopyright": "Copyright © 2025 Reysilva"
+        "NSHumanReadableCopyright": "Copyright © 2025 Reysilva",
+        "NSRequiresAquaSystemAppearance": false
       }
     },
     "dmg": {

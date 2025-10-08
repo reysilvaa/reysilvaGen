@@ -1,0 +1,80 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<!-- ============================================ -->
+<!-- 🍎 macOS ENTITLEMENTS CONFIGURATION         -->
+<!-- ============================================ -->
+<!-- Security permissions for macOS application   -->
+<!-- Platform: macOS 10.13+ (High Sierra and later) -->
+<!-- ============================================ -->
+<plist version="1.0">
+<dict>
+    <!-- ============================================ -->
+    <!-- Code Execution Permissions                  -->
+    <!-- ============================================ -->
+    
+    <!-- Enable JIT compilation for JavaScript/V8 engine -->
+    <key>com.apple.security.cs.allow-jit</key>
+    <true/>
+    
+    <!-- Allow unsigned executable memory (required for Electron/Chromium) -->
+    <key>com.apple.security.cs.allow-unsigned-executable-memory</key>
+    <true/>
+    
+    <!-- Disable library validation (allow loading unsigned libraries) -->
+    <key>com.apple.security.cs.disable-library-validation</key>
+    <true/>
+    
+    <!-- Allow DYLD environment variables -->
+    <key>com.apple.security.cs.allow-dyld-environment-variables</key>
+    <true/>
+    
+    <!-- ============================================ -->
+    <!-- Network Permissions                         -->
+    <!-- ============================================ -->
+    
+    <!-- Enable network client access (for API calls, updates) -->
+    <key>com.apple.security.network.client</key>
+    <true/>
+    
+    <!-- Enable network server access (for temp mail server) -->
+    <key>com.apple.security.network.server</key>
+    <true/>
+    
+    <!-- Enable outgoing connections (for HTTP/HTTPS requests) -->
+    <key>com.apple.security.network.outgoing</key>
+    <true/>
+    
+    <!-- ============================================ -->
+    <!-- File System Permissions                     -->
+    <!-- ============================================ -->
+    
+    <!-- Allow read/write access to user-selected files -->
+    <key>com.apple.security.files.user-selected.read-write</key>
+    <true/>
+    
+    <!-- Allow read/write access to downloads folder -->
+    <key>com.apple.security.files.downloads.read-write</key>
+    <true/>
+    
+    <!-- ============================================ -->
+    <!-- App Sandbox (Disabled for Development)      -->
+    <!-- ============================================ -->
+    
+    <!-- Disable App Sandbox for full system access -->
+    <!-- Note: Production apps should enable sandbox with specific entitlements -->
+    <key>com.apple.security.app-sandbox</key>
+    <false/>
+    
+    <!-- ============================================ -->
+    <!-- Additional Permissions                      -->
+    <!-- ============================================ -->
+    
+    <!-- Allow device information access (for system info) -->
+    <key>com.apple.security.device.audio-input</key>
+    <false/>
+    
+    <key>com.apple.security.device.camera</key>
+    <false/>
+</dict>
+</plist>
+
