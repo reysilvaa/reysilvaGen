@@ -158,8 +158,27 @@
 /* Button ripple effect is handled in components.css */
 
 /* Loading spinner */
-.spinner {
-  animation: spin 0.8s linear infinite;
+.spinner,
+.spinning {
+  animation: spin 1s linear infinite;
+}
+
+/* Update icon animation */
+.update-icon {
+  transition: transform var(--transition-base);
+}
+
+#check-update-btn:hover .update-icon {
+  transform: rotate(180deg);
+}
+
+#check-update-btn:disabled .update-icon {
+  animation: none;
+}
+
+/* Status fade in animation */
+#update-status {
+  animation: slideDown 0.3s ease;
 }
 
 /* Message animations */

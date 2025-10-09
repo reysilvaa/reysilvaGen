@@ -62,20 +62,26 @@ const Sidebar = {
         </nav>
 
         <div class="sidebar-footer">
-          <button class="btn btn-primary btn-small" id="check-update-btn" style="width: 100%; margin-bottom: 12px;">
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align: middle; margin-right: 4px">
+          <button class="btn btn-primary btn-small" id="check-update-btn" style="width: 100%; margin-bottom: 10px; display: flex; align-items: center; justify-content: center; gap: 6px;">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" class="update-icon">
               <path d="M21.5 2v6h-6M2.5 22v-6h6M2 11.5a10 10 0 0 1 18.8-4.3M22 12.5a10 10 0 0 1-18.8 4.2"/>
             </svg>
-            Check for Updates
+            <span>Check for Updates</span>
           </button>
-          <div id="update-status" style="font-size: 11px; color: var(--text-muted); text-align: center; margin-bottom: 8px; display: none;">
+          <div id="update-status" style="font-size: 12px; text-align: center; margin-bottom: 10px; display: none; padding: 8px 12px; border-radius: var(--radius-md); background: var(--bg-secondary); border: 1px solid var(--border);">
             <!-- Update status will be displayed here -->
           </div>
-          <div style="font-size: 11px; color: var(--text-muted); text-align: center">
-            v2.0.2 | Developed by Reysilva
+          <div style="font-size: 11px; color: var(--text-muted); text-align: center; line-height: 1.4;">
+            <div style="font-weight: 600; color: var(--text-secondary);">v2.0.2</div>
+            <div style="margin-top: 2px;">Developed by Reysilva</div>
           </div>
-          <div style="margin-top: 8px; color: var(--danger); text-align: center; font-size: 10px;">
-            ⚠️ Development Only
+          <div style="margin-top: 8px; display: flex; align-items: center; justify-content: center; gap: 6px; color: var(--warning); font-size: 10px; font-weight: 500;">
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+              <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/>
+              <line x1="12" y1="9" x2="12" y2="13"/>
+              <line x1="12" y1="17" x2="12.01" y2="17"/>
+            </svg>
+            <span>Development Only</span>
           </div>
         </div>
       </aside>

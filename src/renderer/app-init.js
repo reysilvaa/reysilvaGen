@@ -79,10 +79,24 @@
 
     // Listen to auto-updater events
     window.autoUpdater.onUpdateAvailable((info) => {
-      updateStatus.style.display = "block";
+      updateStatus.style.display = "flex";
+      updateStatus.style.alignItems = "center";
+      updateStatus.style.justifyContent = "center";
+      updateStatus.style.gap = "6px";
       updateStatus.style.color = "var(--success)";
-      updateStatus.innerHTML = `✨ Update ${info.version} available!`;
-      checkUpdateBtn.textContent = "Download Update";
+      updateStatus.innerHTML = `
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+          <path d="M21 12a9 9 0 1 1-6.219-8.56"/>
+          <polyline points="16 8 22 2 16 2"/>
+        </svg>
+        <span>Update ${info.version} available!</span>
+      `;
+      checkUpdateBtn.innerHTML = `
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+          <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M7 10l5 5 5-5M12 15V3"/>
+        </svg>
+        <span>Download Update</span>
+      `;
       checkUpdateBtn.disabled = false;
       
       // Change button action to download
@@ -90,29 +104,45 @@
         window.autoUpdater.downloadUpdate();
         checkUpdateBtn.disabled = true;
         checkUpdateBtn.innerHTML = `
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align: middle; margin-right: 4px">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" class="spinning">
             <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M7 10l5 5 5-5M12 15V3"/>
           </svg>
-          Downloading...
+          <span>Downloading...</span>
         `;
       };
     });
 
     window.autoUpdater.onDownloadProgress((progress) => {
-      updateStatus.style.display = "block";
+      updateStatus.style.display = "flex";
+      updateStatus.style.alignItems = "center";
+      updateStatus.style.justifyContent = "center";
+      updateStatus.style.gap = "6px";
       updateStatus.style.color = "var(--primary)";
-      updateStatus.innerHTML = `📥 Downloading: ${Math.round(progress.percent)}%`;
+      updateStatus.innerHTML = `
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" class="spinning">
+          <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M7 10l5 5 5-5M12 15V3"/>
+        </svg>
+        <span>Downloading: ${Math.round(progress.percent)}%</span>
+      `;
     });
 
     window.autoUpdater.onUpdateDownloaded((info) => {
-      updateStatus.style.display = "block";
+      updateStatus.style.display = "flex";
+      updateStatus.style.alignItems = "center";
+      updateStatus.style.justifyContent = "center";
+      updateStatus.style.gap = "6px";
       updateStatus.style.color = "var(--success)";
-      updateStatus.innerHTML = `✅ Update ${info.version} ready!`;
+      updateStatus.innerHTML = `
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+          <polyline points="20 6 9 17 4 12"/>
+        </svg>
+        <span>Update ${info.version} ready!</span>
+      `;
       checkUpdateBtn.innerHTML = `
-        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align: middle; margin-right: 4px">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
           <path d="M21.5 2v6h-6M2.5 22v-6h6M2 11.5a10 10 0 0 1 18.8-4.3M22 12.5a10 10 0 0 1-18.8 4.2"/>
         </svg>
-        Restart to Update
+        <span>Restart to Update</span>
       `;
       checkUpdateBtn.disabled = false;
       
@@ -122,16 +152,54 @@
       };
     });
 
+    window.autoUpdater.onUpdateNotAvailable(() => {
+      updateStatus.style.display = "flex";
+      updateStatus.style.alignItems = "center";
+      updateStatus.style.justifyContent = "center";
+      updateStatus.style.gap = "6px";
+      updateStatus.style.color = "var(--success)";
+      updateStatus.innerHTML = `
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+          <polyline points="20 6 9 17 4 12"/>
+        </svg>
+        <span>You're up to date!</span>
+      `;
+      checkUpdateBtn.disabled = false;
+      
+      setTimeout(() => {
+        updateStatus.style.display = "none";
+      }, 3000);
+    });
+
     window.autoUpdater.onUpdateError((error) => {
-      updateStatus.style.display = "block";
-      updateStatus.style.color = "var(--danger)";
-      updateStatus.innerHTML = `❌ Update failed: ${error.message || 'Unknown error'}`;
+      updateStatus.style.display = "flex";
+      updateStatus.style.alignItems = "center";
+      updateStatus.style.justifyContent = "center";
+      updateStatus.style.gap = "6px";
+      const errorMsg = error.message || 'Unknown error';
+      const isNoRelease = errorMsg.includes('404') || errorMsg.includes('timeout');
+      updateStatus.style.color = isNoRelease ? "var(--warning)" : "var(--danger)";
+      updateStatus.innerHTML = isNoRelease ? `
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+          <circle cx="12" cy="12" r="10"/>
+          <line x1="12" y1="16" x2="12" y2="12"/>
+          <line x1="12" y1="8" x2="12.01" y2="8"/>
+        </svg>
+        <span>No releases published yet</span>
+      ` : `
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+          <circle cx="12" cy="12" r="10"/>
+          <line x1="15" y1="9" x2="9" y2="15"/>
+          <line x1="9" y1="9" x2="15" y2="15"/>
+        </svg>
+        <span>Update check failed</span>
+      `;
       checkUpdateBtn.disabled = false;
       checkUpdateBtn.innerHTML = `
-        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align: middle; margin-right: 4px">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" class="update-icon">
           <path d="M21.5 2v6h-6M2.5 22v-6h6M2 11.5a10 10 0 0 1 18.8-4.3M22 12.5a10 10 0 0 1-18.8 4.2"/>
         </svg>
-        Check for Updates
+        <span>Check for Updates</span>
       `;
       
       setTimeout(() => {
@@ -142,17 +210,88 @@
     // Button click handler
     checkUpdateBtn.addEventListener("click", async () => {
       if (!checkUpdateBtn.disabled) {
-        updateStatus.style.display = "block";
+        updateStatus.style.display = "flex";
+        updateStatus.style.alignItems = "center";
+        updateStatus.style.justifyContent = "center";
+        updateStatus.style.gap = "6px";
         updateStatus.style.color = "var(--text-muted)";
-        updateStatus.innerHTML = "🔍 Checking for updates...";
+        updateStatus.innerHTML = `
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" class="spinning">
+            <path d="M21.5 2v6h-6M2.5 22v-6h6M2 11.5a10 10 0 0 1 18.8-4.3M22 12.5a10 10 0 0 1-18.8 4.2"/>
+          </svg>
+          <span>Checking for updates...</span>
+        `;
         checkUpdateBtn.disabled = true;
         
-        const result = await window.autoUpdater.checkForUpdates();
-        
-        if (result && !result.success) {
-          updateStatus.style.display = "block";
-          updateStatus.style.color = "var(--success)";
-          updateStatus.innerHTML = "✅ You're up to date!";
+        try {
+          const result = await window.autoUpdater.checkForUpdates();
+          
+          if (result && !result.success) {
+            // Check failed - could be no releases or network error
+            updateStatus.style.display = "flex";
+            updateStatus.style.alignItems = "center";
+            updateStatus.style.justifyContent = "center";
+            updateStatus.style.gap = "6px";
+            updateStatus.style.color = "var(--warning)";
+            updateStatus.innerHTML = result.error?.includes('timeout') 
+              ? `
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                  <circle cx="12" cy="12" r="10"/>
+                  <line x1="12" y1="8" x2="12" y2="12"/>
+                  <line x1="12" y1="16" x2="12.01" y2="16"/>
+                </svg>
+                <span>Check timed out</span>
+              `
+              : `
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                  <circle cx="12" cy="12" r="10"/>
+                  <line x1="12" y1="16" x2="12" y2="12"/>
+                  <line x1="12" y1="8" x2="12.01" y2="8"/>
+                </svg>
+                <span>No updates available</span>
+              `;
+            checkUpdateBtn.disabled = false;
+            
+            setTimeout(() => {
+              updateStatus.style.display = "none";
+            }, 4000);
+          } else {
+            // If update check succeeds but no update, this event fires
+            setTimeout(() => {
+              if (updateStatus.innerHTML.includes("Checking")) {
+                updateStatus.style.display = "flex";
+                updateStatus.style.alignItems = "center";
+                updateStatus.style.justifyContent = "center";
+                updateStatus.style.gap = "6px";
+                updateStatus.style.color = "var(--success)";
+                updateStatus.innerHTML = `
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                    <polyline points="20 6 9 17 4 12"/>
+                  </svg>
+                  <span>You're up to date!</span>
+                `;
+                checkUpdateBtn.disabled = false;
+                
+                setTimeout(() => {
+                  updateStatus.style.display = "none";
+                }, 3000);
+              }
+            }, 1000);
+          }
+        } catch (error) {
+          updateStatus.style.display = "flex";
+          updateStatus.style.alignItems = "center";
+          updateStatus.style.justifyContent = "center";
+          updateStatus.style.gap = "6px";
+          updateStatus.style.color = "var(--danger)";
+          updateStatus.innerHTML = `
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+              <circle cx="12" cy="12" r="10"/>
+              <line x1="15" y1="9" x2="9" y2="15"/>
+              <line x1="9" y1="9" x2="15" y2="15"/>
+            </svg>
+            <span>Failed to check updates</span>
+          `;
           checkUpdateBtn.disabled = false;
           
           setTimeout(() => {

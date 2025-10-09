@@ -54,6 +54,7 @@ contextBridge.exposeInMainWorld("autoUpdater", {
   downloadUpdate: () => ipcRenderer.invoke("download-update"),
   installUpdate: () => ipcRenderer.invoke("install-update"),
   onUpdateAvailable: (callback) => ipcRenderer.on("update-available", (_, info) => callback(info)),
+  onUpdateNotAvailable: (callback) => ipcRenderer.on("update-not-available", (_, info) => callback(info)),
   onDownloadProgress: (callback) => ipcRenderer.on("update-download-progress", (_, progress) => callback(progress)),
   onUpdateDownloaded: (callback) => ipcRenderer.on("update-downloaded", (_, info) => callback(info)),
   onUpdateError: (callback) => ipcRenderer.on("update-error", (_, error) => callback(error)),
