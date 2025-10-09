@@ -326,11 +326,27 @@
     });
   }
 
+  // ============= Version Display =============
+  async function loadAppVersion() {
+    try {
+      const result = await window.electron.getAppVersion();
+      if (result.success && result.version) {
+        const versionElement = document.getElementById("app-version");
+        if (versionElement) {
+          versionElement.textContent = `v${result.version}`;
+        }
+      }
+    } catch (error) {
+      console.error("❌ Failed to load app version:", error);
+    }
+  }
+
   // ============= Main Init =============
   async function init() {
     console.log("🚀 Initializing app...");
 
     await loadBins();
+    await loadAppVersion();
 
     // Initialize all controllers
     window.CardsController?.init();

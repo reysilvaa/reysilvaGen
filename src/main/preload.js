@@ -27,6 +27,9 @@ contextBridge.exposeInMainWorld("electron", {
   // Config Management
   getConfigPath: () => ipcRenderer.invoke("get-config-path"),
   resetConfig: () => ipcRenderer.invoke("reset-config"),
+  
+  // App Info
+  getAppVersion: () => ipcRenderer.invoke("get-app-version"),
 });
 
 // Cursor Reset API

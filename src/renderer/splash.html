@@ -4,7 +4,7 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <meta http-equiv="Content-Security-Policy" content="default-src 'self'; style-src 'self' 'unsafe-inline'; script-src 'self' 'unsafe-inline';" />
-    <title>Reysilvagen</title>
+    <title>ReysilvaGen</title>
     <style>
       * {
         margin: 0;
@@ -13,27 +13,35 @@
       }
 
       body {
-        font-family: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI",
-          sans-serif;
+        font-family: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
         overflow: hidden;
         background: transparent;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        min-height: 100vh;
       }
 
       .splash-container {
-        width: 500px;
-        height: 350px;
-        background: linear-gradient(135deg, #0a0a0a 0%, #141414 100%);
-        border-radius: 16px;
-        border: 1px solid rgba(255, 255, 255, 0.1);
-        box-shadow: 0 20px 80px rgba(0, 0, 0, 0.9);
+        width: 550px;
+        height: 400px;
+        background: linear-gradient(135deg, #0a0a0a 0%, #141414 50%, #0f0f0f 100%);
+        border-radius: 20px;
+        border: 1px solid rgba(255, 255, 255, 0.08);
+        box-shadow: 
+          0 25px 100px rgba(0, 0, 0, 0.95),
+          0 0 60px rgba(255, 255, 255, 0.03),
+          inset 0 0 80px rgba(255, 255, 255, 0.01);
         display: flex;
         flex-direction: column;
         align-items: center;
-        justify-content: center;
+        justify-content: space-between;
         position: relative;
         overflow: hidden;
+        padding: 50px 40px 30px;
       }
 
+      /* Animated gradient overlay */
       .splash-container::before {
         content: "";
         position: absolute;
@@ -43,10 +51,27 @@
         height: 200%;
         background: radial-gradient(
           circle at 50% 50%,
-          rgba(255, 255, 255, 0.05) 0%,
+          rgba(255, 255, 255, 0.03) 0%,
           transparent 50%
         );
-        animation: rotate 20s linear infinite;
+        animation: rotate 25s linear infinite;
+      }
+
+      /* Top glow effect */
+      .splash-container::after {
+        content: "";
+        position: absolute;
+        top: 0;
+        left: 50%;
+        transform: translateX(-50%);
+        width: 60%;
+        height: 120px;
+        background: radial-gradient(
+          ellipse at center,
+          rgba(255, 255, 255, 0.06) 0%,
+          transparent 70%
+        );
+        pointer-events: none;
       }
 
       @keyframes rotate {
@@ -58,199 +83,305 @@
         }
       }
 
+      /* Floating particles */
+      .particles {
+        position: absolute;
+        width: 100%;
+        height: 100%;
+        overflow: hidden;
+        z-index: 1;
+      }
+
+      .particle {
+        position: absolute;
+        width: 3px;
+        height: 3px;
+        background: rgba(255, 255, 255, 0.3);
+        border-radius: 50%;
+        box-shadow: 0 0 10px rgba(255, 255, 255, 0.4);
+        animation: float-particle 15s ease-in-out infinite;
+      }
+
+      @keyframes float-particle {
+        0% {
+          transform: translateY(400px) translateX(0) scale(0);
+          opacity: 0;
+        }
+        10% {
+          opacity: 1;
+          transform: translateY(360px) translateX(20px) scale(1);
+        }
+        90% {
+          opacity: 1;
+        }
+        100% {
+          transform: translateY(-50px) translateX(-30px) scale(0);
+          opacity: 0;
+        }
+      }
+
+      .particle:nth-child(1) { left: 15%; animation-delay: 0s; }
+      .particle:nth-child(2) { left: 35%; animation-delay: 3s; }
+      .particle:nth-child(3) { left: 55%; animation-delay: 6s; }
+      .particle:nth-child(4) { left: 75%; animation-delay: 2s; }
+      .particle:nth-child(5) { left: 90%; animation-delay: 5s; }
+      .particle:nth-child(6) { left: 25%; animation-delay: 8s; }
+      .particle:nth-child(7) { left: 65%; animation-delay: 4s; }
+
+      /* Content container */
       .content {
         position: relative;
-        z-index: 1;
+        z-index: 2;
         text-align: center;
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+      }
+
+      /* Logo with fancy effects */
+      .logo-container {
+        position: relative;
+        margin-bottom: 32px;
+        animation: float 3.5s ease-in-out infinite;
+      }
+
+      .logo-glow {
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        width: 140px;
+        height: 140px;
+        background: radial-gradient(
+          circle,
+          rgba(255, 255, 255, 0.12) 0%,
+          transparent 70%
+        );
+        border-radius: 50%;
+        animation: glow-pulse 2.5s ease-in-out infinite;
+      }
+
+      @keyframes glow-pulse {
+        0%, 100% {
+          transform: translate(-50%, -50%) scale(1);
+          opacity: 0.5;
+        }
+        50% {
+          transform: translate(-50%, -50%) scale(1.2);
+          opacity: 0.8;
+        }
       }
 
       .logo-icon {
-        margin-bottom: 24px;
-        animation: float 3s ease-in-out infinite;
+        position: relative;
+        width: 90px;
+        height: 90px;
+        background: linear-gradient(135deg, #1a1a1a 0%, #0f0f0f 100%);
+        border-radius: 18px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        border: 2px solid rgba(255, 255, 255, 0.1);
+        box-shadow: 
+          0 10px 40px rgba(0, 0, 0, 0.5),
+          inset 0 0 20px rgba(255, 255, 255, 0.02);
       }
 
       .logo-icon img {
-        width: 80px;
-        height: 80px;
-        filter: drop-shadow(0 0 20px rgba(255, 255, 255, 0.3));
-        border-radius: 8px;
+        width: 60px;
+        height: 60px;
+        filter: drop-shadow(0 0 15px rgba(255, 255, 255, 0.3));
       }
 
       @keyframes float {
-        0%,
-        100% {
+        0%, 100% {
           transform: translateY(0px);
         }
         50% {
-          transform: translateY(-12px);
+          transform: translateY(-10px);
         }
       }
 
+      /* Title styling */
       .title {
-        font-size: 48px;
+        font-size: 42px;
         font-weight: 700;
-        background: linear-gradient(135deg, #ffffff 0%, #b0b0b0 100%);
+        background: linear-gradient(135deg, #ffffff 0%, #b0b0b0 50%, #ffffff 100%);
+        background-size: 200% auto;
         -webkit-background-clip: text;
         -webkit-text-fill-color: transparent;
         background-clip: text;
-        margin-bottom: 8px;
-        letter-spacing: -1px;
+        margin-bottom: 10px;
+        letter-spacing: -1.5px;
+        animation: shine 3s ease-in-out infinite;
+      }
+
+      @keyframes shine {
+        0% {
+          background-position: 0% center;
+        }
+        50% {
+          background-position: 100% center;
+        }
+        100% {
+          background-position: 0% center;
+        }
       }
 
       .subtitle {
-        font-size: 14px;
-        color: #b0b0b0;
-        margin-bottom: 48px;
-        font-weight: 400;
-        letter-spacing: 0.5px;
+        font-size: 13px;
+        color: #888888;
+        margin-bottom: 40px;
+        font-weight: 500;
+        letter-spacing: 0.8px;
+        text-transform: uppercase;
       }
 
+      /* Loading bar */
       .loader-container {
-        width: 240px;
+        width: 280px;
         margin: 0 auto;
       }
 
       .loader {
         width: 100%;
-        height: 4px;
-        background: rgba(255, 255, 255, 0.1);
-        border-radius: 4px;
+        height: 5px;
+        background: rgba(255, 255, 255, 0.05);
+        border-radius: 10px;
         overflow: hidden;
         position: relative;
+        border: 1px solid rgba(255, 255, 255, 0.08);
       }
 
       .loader-bar {
         height: 100%;
         background: linear-gradient(
           90deg,
-          #ffffff 0%,
+          transparent 0%,
+          #ffffff 40%,
           #e0e0e0 50%,
-          #ffffff 100%
+          #ffffff 60%,
+          transparent 100%
         );
-        border-radius: 4px;
-        animation: loading 1.8s ease-in-out infinite;
-        box-shadow: 0 0 10px rgba(255, 255, 255, 0.5);
+        background-size: 200% 100%;
+        border-radius: 10px;
+        animation: loading 2s ease-in-out infinite;
+        box-shadow: 
+          0 0 15px rgba(255, 255, 255, 0.4),
+          inset 0 0 10px rgba(255, 255, 255, 0.2);
       }
 
       @keyframes loading {
         0% {
-          width: 0%;
-          margin-left: 0%;
-        }
-        50% {
-          width: 60%;
-          margin-left: 20%;
+          background-position: 200% center;
         }
         100% {
-          width: 0%;
-          margin-left: 100%;
+          background-position: -200% center;
         }
       }
 
       .status {
         font-size: 12px;
-        color: #909090;
-        margin-top: 16px;
+        color: #666666;
+        margin-top: 18px;
         font-weight: 500;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 8px;
         animation: pulse 2s ease-in-out infinite;
       }
 
+      .status::before {
+        content: "";
+        width: 6px;
+        height: 6px;
+        background: #ffffff;
+        border-radius: 50%;
+        box-shadow: 0 0 10px rgba(255, 255, 255, 0.6);
+        animation: blink 1.5s ease-in-out infinite;
+      }
+
+      @keyframes blink {
+        0%, 100% {
+          opacity: 1;
+        }
+        50% {
+          opacity: 0.3;
+        }
+      }
+
       @keyframes pulse {
-        0%,
-        100% {
-          opacity: 0.6;
+        0%, 100% {
+          opacity: 0.7;
         }
         50% {
           opacity: 1;
         }
       }
 
-      .version {
-        position: absolute;
-        bottom: 24px;
-        font-size: 11px;
-        color: #606060;
-        font-weight: 500;
-      }
-
-      .particles {
-        position: absolute;
+      /* Footer version info */
+      .footer {
+        position: relative;
+        z-index: 2;
+        text-align: center;
         width: 100%;
-        height: 100%;
-        overflow: hidden;
       }
 
-      .particle {
-        position: absolute;
-        width: 2px;
-        height: 2px;
-        background: rgba(255, 255, 255, 0.3);
-        border-radius: 50%;
-        animation: float-particle 10s linear infinite;
+      .version {
+        font-size: 11px;
+        color: #444444;
+        font-weight: 500;
+        letter-spacing: 0.3px;
       }
 
-      @keyframes float-particle {
-        0% {
-          transform: translateY(0) translateX(0);
-          opacity: 0;
-        }
-        10% {
-          opacity: 1;
-        }
-        90% {
-          opacity: 1;
-        }
-        100% {
-          transform: translateY(-350px) translateX(50px);
-          opacity: 0;
-        }
-      }
-
-      .particle:nth-child(1) {
-        left: 10%;
-        animation-delay: 0s;
-      }
-      .particle:nth-child(2) {
-        left: 30%;
-        animation-delay: 2s;
-      }
-      .particle:nth-child(3) {
-        left: 50%;
-        animation-delay: 4s;
-      }
-      .particle:nth-child(4) {
-        left: 70%;
-        animation-delay: 1s;
-      }
-      .particle:nth-child(5) {
-        left: 90%;
-        animation-delay: 3s;
+      .version strong {
+        color: #666666;
+        font-weight: 600;
       }
     </style>
   </head>
   <body>
     <div class="splash-container">
+      <!-- Animated particles -->
       <div class="particles">
         <div class="particle"></div>
         <div class="particle"></div>
         <div class="particle"></div>
         <div class="particle"></div>
         <div class="particle"></div>
+        <div class="particle"></div>
+        <div class="particle"></div>
       </div>
+
+      <!-- Main content -->
       <div class="content">
-        <div class="logo-icon">
-          <img src="../../assets/icon.ico" alt="App Icon" onerror="this.style.display='none'" />
+        <div class="logo-container">
+          <div class="logo-glow"></div>
+          <div class="logo-icon">
+            <img src="../../assets/icon.png" alt="ReysilvaGen" onerror="this.src='../../assets/icon.ico'" />
+          </div>
         </div>
+        
         <div class="title">ReysilvaGEN</div>
-        <div class="subtitle">Professional Test Card Generator</div>
+        <div class="subtitle">Professional Test Data Generator</div>
+        
         <div class="loader-container">
           <div class="loader">
             <div class="loader-bar"></div>
           </div>
-          <div class="status">Loading application...</div>
+          <div class="status">Initializing Application</div>
         </div>
       </div>
-      <div class="version">v2.0.1 | Developed by Reysilva</div>
+
+      <!-- Footer -->
+      <div class="footer">
+        <div class="version">
+          <strong>Version 2.0.2</strong> • Developed by Reysilva
+        </div>
+      </div>
     </div>
   </body>
 </html>

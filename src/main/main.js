@@ -19,8 +19,8 @@ let autoUpdater;
 
 function createSplashScreen() {
   splashWindow = new BrowserWindow({
-    width: 500,
-    height: 350,
+    width: 550,
+    height: 400,
     transparent: true,
     frame: false,
     alwaysOnTop: true,
@@ -254,6 +254,14 @@ ipcMain.handle("set-setting", async (event, { key, value }) => {
 ipcMain.handle("get-config-path", async () => {
   try {
     return { success: true, path: config.getConfigPath() };
+  } catch (error) {
+    return { success: false, message: error.message };
+  }
+});
+
+ipcMain.handle("get-app-version", async () => {
+  try {
+    return { success: true, version: app.getVersion() };
   } catch (error) {
     return { success: false, message: error.message };
   }
