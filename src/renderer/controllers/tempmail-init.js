@@ -136,11 +136,11 @@ function initTempmailTab() {
         inboxDiv.innerHTML = '<div class="placeholder-box" style="text-align: center; padding: 40px 20px; color: var(--text-muted);"><p>Inbox is empty. Waiting for emails...</p></div>';
         
         if (username && domain && result.email !== `${username}@${domain}`) {
-          utils.showSuccess(`✅ Email created: ${result.email}`);
+          utils.showSuccess(`Email created: ${result.email}`);
         } else if (result.isOffline && !username) {
-          utils.showSuccess("✅ Email generated (offline mode)");
+          utils.showSuccess("Email generated (offline mode)");
         } else {
-          utils.showSuccess("✅ Email generated successfully!");
+          utils.showSuccess("Email generated successfully!");
         }
       } else {
         emailDisplay.textContent = "Failed to generate email";
@@ -310,7 +310,7 @@ function initTempmailTab() {
         inboxBadge.textContent = "0";
         hideOTP();
 
-        utils.showSuccess(`🗑️ ${result.message}`);
+        utils.showSuccess(result.message);
       } else {
         utils.showError(result.message || "Failed to delete email");
       }

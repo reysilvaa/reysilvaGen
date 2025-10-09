@@ -63,8 +63,13 @@ const CursorResetTab = {
                 border-radius: 8px;
               "
             >
-              <p style="margin: 0; font-size: 13px; color: #ffc107">
-                ⚠️ <strong>Perhatian:</strong> Disarankan tutup Cursor terlebih dahulu menggunakan tombol "Tutup Cursor" untuk hasil terbaik.
+              <p style="margin: 0; font-size: 13px; color: #ffc107; display: flex; align-items: center; gap: 8px;">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="flex-shrink: 0;">
+                  <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/>
+                  <line x1="12" y1="9" x2="12" y2="13"/>
+                  <line x1="12" y1="17" x2="12.01" y2="17"/>
+                </svg>
+                <span><strong>Perhatian:</strong> Disarankan tutup Cursor terlebih dahulu menggunakan tombol "Tutup Cursor" untuk hasil terbaik.</span>
               </p>
             </div>
           </div>
@@ -86,9 +91,21 @@ const CursorResetTab = {
                 border-radius: 8px;
               "
             >
-              <div style="color: #4a9eff">ℹ️ Siap untuk melakukan reset...</div>
-              <div style="color: #ffc107">
-                ⚠️ Pastikan Anda memiliki hak administrator
+              <div style="color: #4a9eff; display: flex; align-items: center; gap: 8px; margin-bottom: 8px;">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="flex-shrink: 0;">
+                  <circle cx="12" cy="12" r="10"/>
+                  <line x1="12" y1="16" x2="12" y2="12"/>
+                  <line x1="12" y1="8" x2="12.01" y2="8"/>
+                </svg>
+                <span>Siap untuk melakukan reset...</span>
+              </div>
+              <div style="color: #ffc107; display: flex; align-items: center; gap: 8px;">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="flex-shrink: 0;">
+                  <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/>
+                  <line x1="12" y1="9" x2="12" y2="13"/>
+                  <line x1="12" y1="17" x2="12.01" y2="17"/>
+                </svg>
+                <span>Pastikan Anda memiliki hak administrator</span>
               </div>
             </div>
             <div
