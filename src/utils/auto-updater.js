@@ -11,19 +11,6 @@ class AutoUpdaterManager {
     autoUpdater.autoDownload = false;
     autoUpdater.autoInstallOnAppQuit = true;
     
-    // Set timeout and request options to prevent hanging
-    autoUpdater.requestHeaders = {
-      'Cache-Control': 'no-cache'
-    };
-    
-    // Configure HTTP request timeout (10 seconds)
-    autoUpdater.httpExecutor = {
-      request: (options) => {
-        options.timeout = 10000; // 10 second timeout
-        return autoUpdater.httpExecutor.request(options);
-      }
-    };
-    
     // Logging
     autoUpdater.logger = {
       info: (msg) => console.log('[AutoUpdater]', msg),
