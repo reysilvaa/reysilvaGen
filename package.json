@@ -142,11 +142,6 @@
     "dmg": {
       "title": "${productName} ${version}",
       "icon": "assets/icon.icns",
-      "background": null,
-      "window": {
-        "width": 540,
-        "height": 380
-      },
       "contents": [
         {
           "x": 130,
