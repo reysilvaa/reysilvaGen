@@ -41,6 +41,7 @@ contextBridge.exposeInMainWorld("cursorResetAPI", {
 
 // Tempmail API
 contextBridge.exposeInMainWorld("tempmailAPI", {
+  scrapeExisting: () => ipcRenderer.invoke("tempmail-scrape-existing"),
   generateEmail: (domain, customEmail) => ipcRenderer.invoke("tempmail-generate", domain, customEmail),
   checkInbox: () => ipcRenderer.invoke("tempmail-check-inbox"),
   readEmail: (emailId) => ipcRenderer.invoke("tempmail-read-email", emailId),

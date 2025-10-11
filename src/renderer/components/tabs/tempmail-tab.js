@@ -30,7 +30,7 @@ const TempmailTab = {
                   </div>
                   <div style="flex: 1; min-width: 0;">
                     <div id="tempmail-email-display" style="font-size: 15px; font-weight: 600; color: var(--text-primary); font-family: var(--font-mono); overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">
-                      Generate an email to start
+                      Loading...
                     </div>
                   </div>
                   <button id="copy-email-btn" style="display: none; flex-shrink: 0; width: 38px; height: 38px; background: var(--bg-secondary); border: 1px solid var(--border); border-radius: var(--radius-md); align-items: center; justify-content: center; cursor: pointer; transition: var(--transition-base); color: var(--accent);" onmouseover="this.style.background='var(--bg-hover)'; this.style.borderColor='var(--border-light)';" onmouseout="this.style.background='var(--bg-secondary)'; this.style.borderColor='var(--border)';" title="Copy email">

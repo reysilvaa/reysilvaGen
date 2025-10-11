@@ -45,6 +45,91 @@ class TempmailHeadless {
   }
 
   /**
+   * Scrape existing auto-generated email from website
+   */
+  async scrapeExistingEmail() {
+    try {
+      const window = this.getWindow();
+      
+      return new Promise((resolve) => {
+        const loadHandler = async () => {
+          try {
+            await new Promise(r => setTimeout(r, 2500)); // Wait for auto-generation
+            
+            const result = await window.webContents.executeJavaScript(`
+              (function() {
+                console.log('🔍 Scraping existing auto-generated email...');
+                
+                // XPath untuk mencari email yang sudah auto-generate
+                const emailXPath = '//*[@id="email_id"]';
+                const emailResult = document.evaluate(emailXPath, document, null, XPathResult.FIRST_ORDERED_NODE_TYPE, null);
+                const emailDiv = emailResult.singleNodeValue;
+                
+                if (emailDiv && emailDiv.textContent && emailDiv.textContent.trim()) {
+                  const autoEmail = emailDiv.textContent.trim();
+                  if (autoEmail.includes('@')) {
+                    console.log('✅ Found auto-generated email:', autoEmail);
+                    return { email: autoEmail, found: true };
+                  }
+                }
+                
+                // Fallback XPath: cari dengan selector alternatif
+                const altXPaths = [
+                  '//*[@x-text="currentEmail"]',
+                  '//*[contains(@class, "text-gray-900") and contains(@class, "font-medium")]',
+                  '//*[contains(@class, "font-mono") and contains(text(), "@")]'
+                ];
+                
+                for (const xpath of altXPaths) {
+                  const result = document.evaluate(xpath, document, null, XPathResult.FIRST_ORDERED_NODE_TYPE, null);
+                  if (result.singleNodeValue) {
+                    const email = result.singleNodeValue.textContent.trim();
+                    if (email.includes('@')) {
+                      console.log('✅ Found email via fallback XPath:', email);
+                      return { email: email, found: true };
+                    }
+                  }
+                }
+                
+                console.log('❌ No auto-generated email found');
+                return { email: null, found: false };
+              })();
+            `);
+
+            if (result.found && result.email) {
+              this.currentEmail = result.email;
+              console.log('📧 Using existing auto-generated email:', result.email);
+              resolve({ 
+                success: true, 
+                email: result.email, 
+                message: 'Email scraped from website',
+                isExisting: true
+              });
+            } else {
+              console.log('⚠️ No existing email found, will need to generate');
+              resolve({ 
+                success: false, 
+                message: 'No existing email found on website' 
+              });
+            }
+          } catch (error) {
+            console.error('❌ Error scraping existing email:', error);
+            resolve({ success: false, message: error.message });
+          }
+        };
+
+        window.webContents.once('did-finish-load', loadHandler);
+        window.loadURL('https://tempmail.ac.id').catch(err => {
+          console.error('❌ Failed to load tempmail.ac.id:', err);
+          resolve({ success: false, message: err.message });
+        });
+      });
+    } catch (error) {
+      return { success: false, message: error.message };
+    }
+  }
+
+  /**
    * Generate email from tempmail.ac.id
    * @param {string} preferredDomain - Domain untuk fallback email (oliq.me, asmojo.tech, gipo.me)
    * @param {string} customEmail - Custom email to switch to (e.g., username@domain.com)

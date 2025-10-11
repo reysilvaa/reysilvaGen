@@ -317,6 +317,15 @@ ipcMain.handle("cursor-check-status", async () => {
 });
 
 // Tempmail Operations - Headless Browser
+ipcMain.handle("tempmail-scrape-existing", async () => {
+  try {
+    if (!tempmailHeadless) tempmailHeadless = new TempmailScraper();
+    return await tempmailHeadless.scrapeExistingEmail();
+  } catch (error) {
+    return { success: false, message: error.message };
+  }
+});
+
 ipcMain.handle("tempmail-generate", async (event, domain, customEmail) => {
   try {
     if (!tempmailHeadless) tempmailHeadless = new TempmailScraper();

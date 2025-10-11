@@ -27,6 +27,9 @@ function initTempmailTab() {
   let emailHistory = [];
   const utils = window.Utils;
 
+  // Auto scrape existing email when tab loads
+  autoScrapeExistingEmail();
+
   // Modal handlers
   newEmailBtn?.addEventListener("click", () => {
     createModal.style.display = "flex";
@@ -96,6 +99,44 @@ function initTempmailTab() {
   randomEmailBtn?.addEventListener("click", async () => {
     await generateEmailWithUsername(null, null);
   });
+
+  // Auto scrape existing email when tab loads
+  async function autoScrapeExistingEmail() {
+    try {
+      emailDisplay.textContent = "Loading existing email...";
+      copyEmailBtn.style.display = "none";
+      checkInboxBtn.disabled = true;
+      inboxDiv.innerHTML = '<div class="placeholder-box" style="text-align: center; padding: 40px 20px; color: var(--text-muted);"><p>Loading existing email...</p></div>';
+      inboxBadge.textContent = "0";
+      
+      console.log('🔍 Auto-scraping existing email on tab load...');
+      const existingResult = await window.tempmailAPI.scrapeExisting();
+      
+      if (existingResult.success && existingResult.email) {
+        console.log('✅ Found existing email:', existingResult.email);
+        
+        emailDisplay.textContent = existingResult.email;
+        copyEmailBtn.style.display = "flex";
+        checkInboxBtn.disabled = false;
+        deleteEmailBtn.disabled = false;
+        
+        addToHistory(existingResult.email);
+        
+        inboxDiv.innerHTML = '<div class="placeholder-box" style="text-align: center; padding: 40px 20px; color: var(--text-muted);"><p>Inbox is empty. Waiting for emails...</p></div>';
+        
+        // Auto check inbox after getting existing email
+        setTimeout(() => checkInbox(true), 1000);
+      } else {
+        console.log('⚠️ No existing email found');
+        emailDisplay.textContent = "Click 'Random' to generate email";
+        inboxDiv.innerHTML = '<div class="placeholder-box" style="text-align: center; padding: 60px 20px; color: var(--text-muted);"><svg width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" style="margin: 0 auto 20px; opacity: 0.3;"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg><p style="font-size: 14px;">Click Random to generate an email</p></div>';
+      }
+    } catch (error) {
+      console.error('❌ Error auto-scraping existing email:', error);
+      emailDisplay.textContent = "Click 'Random' to generate email";
+      inboxDiv.innerHTML = '<div class="placeholder-box" style="text-align: center; padding: 60px 20px; color: var(--text-muted);"><p>Click Random to generate an email</p></div>';
+    }
+  }
 
   // Generate email function
   async function generateEmailWithUsername(username = null, domain = null) {
