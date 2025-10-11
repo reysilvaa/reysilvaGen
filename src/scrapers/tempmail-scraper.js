@@ -23,8 +23,22 @@ class TempmailHeadless {
         webPreferences: {
           nodeIntegration: false,
           contextIsolation: true,
-          javascript: true
+          javascript: true,
+          webSecurity: false, // Allow external images
+          allowRunningInsecureContent: true
         }
+      });
+
+      // Set CSP untuk mengizinkan gambar eksternal
+      this.window.webContents.session.webRequest.onHeadersReceived((details, callback) => {
+        callback({
+          responseHeaders: {
+            ...details.responseHeaders,
+            'Content-Security-Policy': [
+              "default-src 'self' 'unsafe-inline' 'unsafe-eval' data: blob: https: http:; img-src 'self' data: blob: https: http: *; media-src 'self' data: blob: https: http: *;"
+            ]
+          }
+        });
       });
     }
     return this.window;
@@ -117,25 +131,13 @@ class TempmailHeadless {
         });
       }
       
-      // Jika ada email sebelumnya, delete dulu
-      if (this.currentEmail && this.window && !this.window.isDestroyed()) {
-        try {
-          await this.window.webContents.executeJavaScript(`
-            (function() {
-              const deleteBtn = document.querySelector('[wire\\\\:click="deleteEmail"]');
-              if (deleteBtn) deleteBtn.click();
-            })();
-          `);
-          await new Promise(r => setTimeout(r, 2000));
-        } catch (err) {
-          // Ignore, akan create window baru
-        }
-      }
+      // Reset current email - akan di-set ulang setelah generate
+      this.currentEmail = null;
       
       return new Promise((resolve) => {
         const loadHandler = async () => {
           try {
-            await new Promise(r => setTimeout(r, 2500)); // Wait for Livewire
+            await new Promise(r => setTimeout(r, 2000)); // Wait for Livewire
             
             const result = await window.webContents.executeJavaScript(`
               (function() {
@@ -150,36 +152,10 @@ class TempmailHeadless {
               })();
             `);
 
-            if (result.email && result.email !== this.currentEmail) {
+            if (result.email) {
+              // Selalu gunakan email yang didapat, tidak perlu regenerate
               this.currentEmail = result.email;
               resolve({ success: true, email: result.email, message: 'Email generated successfully' });
-            } else if (result.email) {
-              // Email sama, coba delete dan reload
-              await window.webContents.executeJavaScript(`
-                (function() {
-                  const deleteBtn = document.querySelector('[wire\\\\:click="deleteEmail"]');
-                  if (deleteBtn) deleteBtn.click();
-                })();
-              `);
-              await new Promise(r => setTimeout(r, 2500));
-              
-              const newResult = await window.webContents.executeJavaScript(`
-                (function() {
-                  const emailDiv = document.getElementById('email_id');
-                  if (emailDiv && emailDiv.textContent) {
-                    return { email: emailDiv.textContent.trim() };
-                  }
-                  return { email: null };
-                })();
-              `);
-              
-              if (newResult.email && newResult.email !== this.currentEmail) {
-                this.currentEmail = newResult.email;
-                resolve({ success: true, email: newResult.email, message: 'Email generated successfully' });
-              } else {
-                const fallback = this.generateFallbackEmail(preferredDomain);
-                resolve({ success: true, email: fallback, message: 'Email generated (fallback)', isOffline: true });
-              }
             } else {
               const fallback = this.generateFallbackEmail(preferredDomain);
               resolve({ success: true, email: fallback, message: 'Email generated (offline)', isOffline: true });
@@ -228,28 +204,70 @@ class TempmailHeadless {
             const result = await this.window.webContents.executeJavaScript(`
               (function() {
                 const emails = [];
-                const emailItems = document.querySelectorAll('[data-id]');
                 
-                console.log('📧 Found email items:', emailItems.length);
+                // Gunakan XPath untuk mencari email items dengan data-id
+                const emailXPath = '//*[@data-id]';
+                const emailResult = document.evaluate(emailXPath, document, null, XPathResult.ORDERED_NODE_SNAPSHOT_TYPE, null);
                 
-                emailItems.forEach(item => {
+                console.log('📧 Found email items via XPath:', emailResult.snapshotLength);
+                
+                for (let i = 0; i < emailResult.snapshotLength; i++) {
+                  const item = emailResult.snapshotItem(i);
                   const id = item.getAttribute('data-id');
-                  const senderEl = item.querySelector('.w-1\\\\/2:first-child, [class*="sender"]');
-                  const subjectEl = item.querySelector('.w-1\\\\/2:nth-child(2), [class*="subject"]');
-                  const emailEl = item.querySelector('.text-xs');
                   
-                  if (id) {
-                    const email = {
-                      id: id,
-                      sender: senderEl ? senderEl.textContent.trim() : 'Unknown',
-                      from: emailEl ? emailEl.textContent.trim() : '',
-                      subject: subjectEl ? subjectEl.textContent.trim() : 'No Subject',
-                      read: false
-                    };
-                    console.log('📨 Email found:', email);
-                    emails.push(email);
+                  // Skip jika ID null, empty, atau "0"
+                  if (!id || id === '0' || id === 'null') {
+                    console.log('⏭️ Skipping email with invalid ID:', id);
+                    continue;
                   }
-                });
+                  
+                  // Gunakan XPath untuk mencari child divs
+                  const childDivXPath = './div';
+                  const childDivResult = document.evaluate(childDivXPath, item, null, XPathResult.ORDERED_NODE_SNAPSHOT_TYPE, null);
+                  
+                  const senderDiv = childDivResult.snapshotLength > 0 ? childDivResult.snapshotItem(0) : null;
+                  const subjectDiv = childDivResult.snapshotLength > 1 ? childDivResult.snapshotItem(1) : null;
+                  
+                  // Extract sender info menggunakan XPath
+                  let senderName = 'Unknown';
+                  let senderEmail = '';
+                  
+                  if (senderDiv) {
+                    // XPath untuk text nodes pertama
+                    const textNodeXPath = './text()[normalize-space()]';
+                    const textResult = document.evaluate(textNodeXPath, senderDiv, null, XPathResult.FIRST_ORDERED_NODE_TYPE, null);
+                    if (textResult.singleNodeValue) {
+                      senderName = textResult.singleNodeValue.textContent.trim();
+                    }
+                    
+                    // XPath untuk email dengan class text-xs
+                    const emailXPath = './/div[contains(@class, "text-xs")]';
+                    const emailResult = document.evaluate(emailXPath, senderDiv, null, XPathResult.FIRST_ORDERED_NODE_TYPE, null);
+                    if (emailResult.singleNodeValue) {
+                      senderEmail = emailResult.singleNodeValue.textContent.trim();
+                    }
+                  }
+                  
+                  // Extract date - akan diambil saat email dibuka
+                  let emailDate = 'Just now';
+                  
+                  const email = {
+                    id,
+                    sender: senderName,
+                    from: senderEmail,
+                    subject: subjectDiv?.textContent.trim() || 'No Subject',
+                    time: emailDate,
+                    date: emailDate,
+                    read: false,
+                    timestamp: new Date().getTime() // For sorting
+                  };
+                  
+                  console.log('📨 Valid email found via XPath:', email);
+                  emails.push(email);
+                }
+                
+                // Sort emails by timestamp (newest first)
+                emails.sort((a, b) => b.timestamp - a.timestamp);
                 
                 console.log('✅ Total emails:', emails.length);
                 return { emails };
@@ -258,16 +276,28 @@ class TempmailHeadless {
             
             console.log(`📬 Inbox result: ${result.emails.length} email(s) found`);
 
-            // Extract OTP from each email
+            // Extract OTP and date from each email
             for (const email of result.emails) {
               const otp = await this.extractOTP(email.id);
               if (otp) {
                 email.otp = otp;
-                email.preview = `🔐 ${otp} - ${email.subject}`;
+                email.preview = `OTP: ${otp} - ${email.subject}`;
               } else {
                 email.preview = email.subject;
               }
+              
+              // Extract real date from email detail
+              const emailDate = await this.extractEmailDate(email.id);
+              if (emailDate && emailDate !== 'Unknown') {
+                email.time = emailDate;
+                email.date = emailDate;
+                // Update timestamp for better sorting
+                email.timestamp = this.parseEmailDate(emailDate);
+              }
             }
+
+            // Sort emails by timestamp after updating dates (newest first)
+            result.emails.sort((a, b) => (b.timestamp || 0) - (a.timestamp || 0));
 
             resolve({
               success: true,
@@ -286,22 +316,115 @@ class TempmailHeadless {
   }
 
   /**
-   * Extract OTP from email by ID
+   * Extract date from email by ID
    */
-  async extractOTP(emailId) {
+  async extractEmailDate(emailId) {
     try {
       const result = await this.window.webContents.executeJavaScript(`
         (function() {
           const messageDiv = document.querySelector('#message-${emailId}');
           if (!messageDiv) return null;
           
-          const textarea = messageDiv.querySelector('textarea');
-          if (!textarea) return null;
+          // Gunakan XPath untuk mencari div dengan class "text-xs overflow-ellipsis" yang berisi tanggal
+          const xpath = './/div[contains(@class, "text-xs") and contains(@class, "overflow-ellipsis")]';
+          const xpathResult = document.evaluate(xpath, messageDiv, null, XPathResult.ORDERED_NODE_SNAPSHOT_TYPE, null);
           
-          const content = textarea.value;
+          for (let i = 0; i < xpathResult.snapshotLength; i++) {
+            const element = xpathResult.snapshotItem(i);
+            const text = element.textContent.trim();
+            
+            // Check if text matches date pattern (DD MMM YYYY HH:MM AM/PM)
+            if (text.match(/^\\d{1,2}\\s+\\w{3}\\s+\\d{4}\\s+\\d{1,2}:\\d{2}\\s+(AM|PM)$/i)) {
+              console.log('📅 Found date via XPath:', text);
+              return text;
+            }
+          }
+          
+          // Fallback XPath: cari struktur Date dengan parent div
+          const dateXPath = './/div[text()="Date"]/following-sibling::div[contains(@class, "text-xs")]';
+          const dateResult = document.evaluate(dateXPath, messageDiv, null, XPathResult.FIRST_ORDERED_NODE_TYPE, null);
+          
+          if (dateResult.singleNodeValue) {
+            const dateText = dateResult.singleNodeValue.textContent.trim();
+            console.log('📅 Found date via fallback XPath:', dateText);
+            return dateText;
+          }
+          
+          // Last fallback: traditional method
+          const dateSection = messageDiv.querySelector('.flex.justify-between.items-center');
+          if (dateSection) {
+            const divs = dateSection.querySelectorAll('div');
+            if (divs.length >= 2) {
+              const dateDiv = divs[1];
+              const dateText = dateDiv.querySelector('.text-xs.overflow-ellipsis') || dateDiv.querySelector('.text-xs');
+              if (dateText) {
+                console.log('📅 Found date via CSS fallback:', dateText.textContent.trim());
+                return dateText.textContent.trim();
+              }
+            }
+          }
+          
+          console.log('❌ No date found for email:', '${emailId}');
+          return null;
+        })();
+      `);
+      return result;
+    } catch (error) {
+      console.error('Error extracting date:', error);
+      return null;
+    }
+  }
+
+  /**
+   * Parse email date string to timestamp for sorting
+   */
+  parseEmailDate(dateString) {
+    try {
+      // Format: "11 Oct 2025 06:18 PM"
+      const date = new Date(dateString);
+      return date.getTime();
+    } catch (error) {
+      return new Date().getTime(); // Fallback to current time
+    }
+  }
+
+  /**
+   * Extract OTP from email by ID
+   */
+  async extractOTP(emailId) {
+    try {
+      const result = await this.window.webContents.executeJavaScript(`
+        (function() {
+          // XPath untuk mencari message div
+          const messageXPath = '//*[@id="message-${emailId}"]';
+          const messageResult = document.evaluate(messageXPath, document, null, XPathResult.FIRST_ORDERED_NODE_TYPE, null);
+          const messageDiv = messageResult.singleNodeValue;
+          
+          if (!messageDiv) return null;
+          
+          // XPath untuk mencari iframe
+          const iframeXPath = './/iframe';
+          const iframeResult = document.evaluate(iframeXPath, messageDiv, null, XPathResult.FIRST_ORDERED_NODE_TYPE, null);
+          const iframe = iframeResult.singleNodeValue;
+          
+          let content = '';
+          
+          if (iframe) {
+            const srcdoc = iframe.getAttribute('srcdoc');
+            if (srcdoc) {
+              content = srcdoc.replace(/&lt;/g, '<').replace(/&gt;/g, '>').replace(/&quot;/g, '"')
+                             .replace(/&amp;#x27;/g, "'").replace(/&amp;/g, '&');
+            }
+          }
+          
+          // Fallback: get all text content
+          if (!content) {
+            content = messageDiv.textContent;
+          }
+          
           const otpPatterns = [
-            /(?:code|otp|token|verification|kode)[\\s\\S]{0,50}?(\\d{4,8})/gi,
-            /(\\d{6})/g,
+            /(?:one-time\\s+code\\s+is|code\\s+is|otp\\s+is|verification\\s+code)\\s*[:;]?\\s*(\\d{4,8})/gi,
+            /\\b(\\d{6})\\b/g,
             /your\\s+(?:one-time\\s+)?code\\s+is[\\s:]+(\\d{4,8})/gi
           ];
           
@@ -334,29 +457,116 @@ class TempmailHeadless {
         return { success: false, message: "No email generated yet" };
       }
 
+      console.log(`📖 Reading email ID: ${emailId}`);
+
+      // First, click on the email to open it menggunakan XPath
+      const clicked = await this.window.webContents.executeJavaScript(`
+        (function() {
+          const emailXPath = '//*[@data-id="${emailId}"]';
+          const emailResult = document.evaluate(emailXPath, document, null, XPathResult.FIRST_ORDERED_NODE_TYPE, null);
+          const emailItem = emailResult.singleNodeValue;
+          
+          if (emailItem) {
+            emailItem.click();
+            return true;
+          }
+          return false;
+        })();
+      `);
+
+      if (!clicked) {
+        console.error(`❌ Email item not found: ${emailId}`);
+        return { success: false, message: 'Email not found in inbox' };
+      }
+
+      // Wait for email content to load
+      await new Promise(r => setTimeout(r, 1500));
+
       const result = await this.window.webContents.executeJavaScript(`
         (function() {
-          const messageDiv = document.querySelector('#message-${emailId}');
-          if (!messageDiv) return { success: false, message: 'Email not found' };
-
-          const textarea = messageDiv.querySelector('textarea');
-          if (!textarea) return { success: false, message: 'Email content not found' };
-
-          const rawContent = textarea.value;
-          const fromMatch = rawContent.match(/From:\\s*"?([^"<]+)"?\\s*<?([^>]+)?>?/i);
-          const subjectMatch = rawContent.match(/Subject:\\s*(.+?)(?:\\r?\\n|Date:)/i);
-          const dateMatch = rawContent.match(/Date:\\s*(.+?)(?:\\r?\\n|Content-Type:)/i);
+          // XPath untuk mencari message div
+          const messageXPath = '//*[@id="message-${emailId}"]';
+          const messageResult = document.evaluate(messageXPath, document, null, XPathResult.FIRST_ORDERED_NODE_TYPE, null);
+          const messageDiv = messageResult.singleNodeValue;
           
-          // Extract OTP
+          if (!messageDiv) {
+            console.error('Message div not found for ID: ${emailId}');
+            return { success: false, message: 'Email content not loaded' };
+          }
+
+          // Extract menggunakan XPath
+          let senderName = 'Unknown';
+          let senderEmail = '';
+          let date = 'Unknown';
+          
+          // XPath untuk mencari tanggal dengan akurat
+          const dateXPath = './/div[contains(@class, "text-xs") and contains(@class, "overflow-ellipsis") and contains(text(), "20")]';
+          const dateResult = document.evaluate(dateXPath, messageDiv, null, XPathResult.FIRST_ORDERED_NODE_TYPE, null);
+          
+          if (dateResult.singleNodeValue) {
+            const dateText = dateResult.singleNodeValue.textContent.trim();
+            if (dateText.match(/^\\d{1,2}\\s+\\w{3}\\s+\\d{4}\\s+\\d{1,2}:\\d{2}\\s+(AM|PM)$/i)) {
+              date = dateText;
+              console.log('📅 Date extracted via XPath:', date);
+            }
+          }
+          
+          // XPath untuk mencari sender info
+          const senderXPath = './/div[contains(@class, "flex") and contains(@class, "justify-between")]/div[1]';
+          const senderResult = document.evaluate(senderXPath, messageDiv, null, XPathResult.FIRST_ORDERED_NODE_TYPE, null);
+          
+          if (senderResult.singleNodeValue) {
+            const senderDiv = senderResult.singleNodeValue;
+            
+            // XPath untuk text node pertama (sender name)
+            const nameXPath = './text()[normalize-space()]';
+            const nameResult = document.evaluate(nameXPath, senderDiv, null, XPathResult.FIRST_ORDERED_NODE_TYPE, null);
+            if (nameResult.singleNodeValue) {
+              senderName = nameResult.singleNodeValue.textContent.trim();
+            }
+            
+            // XPath untuk email address
+            const emailXPath = './/div[contains(@class, "text-xs")]';
+            const emailResult = document.evaluate(emailXPath, senderDiv, null, XPathResult.FIRST_ORDERED_NODE_TYPE, null);
+            if (emailResult.singleNodeValue) {
+              senderEmail = emailResult.singleNodeValue.textContent.trim();
+            }
+          }
+          
+          // XPath untuk subject
+          const subjectXPath = './/div[contains(@class, "border-t") and contains(@class, "border-b") and contains(@class, "border-dashed")]';
+          const subjectResult = document.evaluate(subjectXPath, messageDiv, null, XPathResult.FIRST_ORDERED_NODE_TYPE, null);
+          const subject = subjectResult.singleNodeValue ? subjectResult.singleNodeValue.textContent.trim() : 'No Subject';
+          
+          // XPath untuk iframe body
+          const iframeXPath = './/iframe';
+          const iframeResult = document.evaluate(iframeXPath, messageDiv, null, XPathResult.FIRST_ORDERED_NODE_TYPE, null);
+          const iframe = iframeResult.singleNodeValue;
+          
+          let body = '';
+          let rawContent = '';
+          
+          if (iframe) {
+            const srcdoc = iframe.getAttribute('srcdoc');
+            if (srcdoc) {
+              // Decode HTML entities
+              rawContent = srcdoc.replace(/&lt;/g, '<').replace(/&gt;/g, '>').replace(/&quot;/g, '"')
+                                 .replace(/&amp;#x27;/g, "'").replace(/&amp;/g, '&');
+              body = rawContent;
+            }
+          }
+          
+          // Extract OTP from rawContent
+          const fullText = rawContent || body;
           const otpPatterns = [
-            /(?:code|otp|token|verification|kode)[\\s\\S]{0,50}?(\\d{4,8})/gi,
-            /(\\d{6})/g,
+            /(?:one-time\\s+code\\s+is|code\\s+is|otp\\s+is|verification\\s+code)\\s*[:;]?\\s*(\\d{4,8})/gi,
+            /\\b(\\d{6})\\b/g,
             /your\\s+(?:one-time\\s+)?code\\s+is[\\s:]+(\\d{4,8})/gi
           ];
           
           let otp = null;
           for (const pattern of otpPatterns) {
-            const matches = rawContent.match(pattern);
+            const matches = fullText.match(pattern);
             if (matches) {
               for (const match of matches) {
                 const code = match.match(/\\d{4,8}/);
@@ -369,19 +579,19 @@ class TempmailHeadless {
             }
           }
           
-          const bodyMatch = rawContent.match(/Content-Type:\\s*text\\/html[\\s\\S]*?(<[\\s\\S]+)/i);
-          let body = bodyMatch ? bodyMatch[1] : rawContent;
-          body = body.replace(/&lt;/g, '<').replace(/&gt;/g, '>').replace(/&quot;/g, '"')
-                     .replace(/&amp;#x27;/g, "'").replace(/&amp;/g, '&');
+          // If no body from iframe, show placeholder
+          if (!body) {
+            body = '<div style="padding: 20px; text-align: center; color: #666;">Email content not available</div>';
+          }
 
           return {
             success: true,
             email: {
               id: '${emailId}',
-              from: fromMatch ? (fromMatch[2] || fromMatch[1]) : 'Unknown',
-              sender: fromMatch ? fromMatch[1] : 'Unknown',
-              subject: subjectMatch ? subjectMatch[1].trim() : 'No Subject',
-              date: dateMatch ? dateMatch[1].trim() : 'Unknown',
+              from: senderEmail || senderName,
+              sender: senderName,
+              subject: subject,
+              date: date,
               body: body,
               html: body,
               text: body.replace(/<[^>]*>/g, '').substring(0, 500),
@@ -391,6 +601,7 @@ class TempmailHeadless {
         })();
       `);
 
+      console.log('📧 Read email result:', result.success ? 'Success' : result.message);
       return result;
     } catch (error) {
       return { success: false, message: error.message };

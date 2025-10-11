@@ -10,7 +10,7 @@ const TempmailTab = {
             </svg>
             Temporary Email
           </h2>
-          <p>Generate disposable email addresses with automatic OTP detection</p>
+          <p>Generate disposable email addresses and manage multiple inboxes</p>
         </div>
 
         <div class="tempmail-container">
@@ -50,6 +50,7 @@ const TempmailTab = {
                     <polyline points="9 22 9 12 15 12 15 22"/>
                   </svg>
                   Email History
+                  <span style="font-size: 11px; font-weight: 400; color: var(--text-muted); margin-left: auto;">(Click to switch)</span>
                 </h4>
                 <div id="email-history-list" style="background: var(--bg-secondary); border: 1px solid var(--border); border-radius: var(--radius-md); max-height: 240px; overflow-y: auto;">
                   <div style="padding: 30px 20px; text-align: center; color: var(--text-muted); font-size: 13px;">
@@ -130,25 +131,6 @@ const TempmailTab = {
                 <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                   <path d="M21.5 2v6h-6M2.5 22v-6h6M2 11.5a10 10 0 0 1 18.8-4.3M22 12.5a10 10 0 0 1-18.8 4.2"/>
                 </svg>
-              </button>
-            </div>
-            
-            <!-- OTP Display (if found) -->
-            <div id="otp-display" class="otp-card" style="display: none;">
-              <div class="otp-header">
-                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                  <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/>
-                  <path d="M7 11V7a5 5 0 0 1 10 0v4"/>
-                </svg>
-                <span>Verification Code</span>
-              </div>
-              <div id="otp-code" class="otp-code">------</div>
-              <button class="btn-copy-otp" id="copy-otp-btn">
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                  <rect x="9" y="9" width="13" height="13" rx="2" ry="2"/>
-                  <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/>
-                </svg>
-                <span>Copy Code</span>
               </button>
             </div>
             

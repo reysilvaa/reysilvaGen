@@ -1,6 +1,15 @@
 const { app, BrowserWindow, ipcMain, Menu } = require("electron");
 const path = require("path");
 
+// Configuration
+const { APP_CONFIG } = require("../config/constants");
+const isDev = process.argv.includes("--dev");
+
+if (isDev) {
+  const { setupDevelopmentEnvironment } = require("../config/development");
+  setupDevelopmentEnvironment(app);
+}
+
 // Modules
 const ConfigManager = require("../modules/config-manager");
 const CursorResetManager = require("../modules/cursor-reset-manager");
@@ -19,40 +28,36 @@ let autoUpdater;
 
 function createSplashScreen() {
   splashWindow = new BrowserWindow({
-    width: 550,
-    height: 400,
+    width: APP_CONFIG.window.splash.width,
+    height: APP_CONFIG.window.splash.height,
     transparent: true,
     frame: false,
     alwaysOnTop: true,
     resizable: false,
-    icon: path.join(__dirname, "../../assets", "icon.ico"),
-    webPreferences: {
-      nodeIntegration: false,
-      contextIsolation: true,
-    },
+    icon: APP_CONFIG.icons.main,
+    webPreferences: APP_CONFIG.webPreferences.secure,
   });
 
-  splashWindow.loadFile("src/renderer/splash.html");
+  splashWindow.loadFile(path.join(APP_CONFIG.paths.renderer, "splash.html"));
   splashWindow.center();
 }
 
 function createMainWindow() {
   mainWindow = new BrowserWindow({
-    width: 1200,
-    height: 800,
-    minWidth: 900,
-    minHeight: 700,
+    width: APP_CONFIG.window.main.width,
+    height: APP_CONFIG.window.main.height,
+    minWidth: APP_CONFIG.window.main.minWidth,
+    minHeight: APP_CONFIG.window.main.minHeight,
     show: false,
     backgroundColor: "#0a0a0a",
+    icon: APP_CONFIG.icons.main,
     webPreferences: {
-      nodeIntegration: false,
-      contextIsolation: true,
-      preload: path.join(__dirname, "preload.js"),
+      ...APP_CONFIG.webPreferences.secure,
+      preload: APP_CONFIG.paths.preload,
     },
-    icon: path.join(__dirname, "../../assets", "icon.ico"),
   });
 
-  mainWindow.loadFile("src/renderer/index.html");
+  mainWindow.loadFile(path.join(APP_CONFIG.paths.renderer, "index.html"));
 
   // Remove menu bar
   Menu.setApplicationMenu(null);
@@ -66,11 +71,11 @@ function createMainWindow() {
       mainWindow.center();
       
       // Initialize auto updater and check for updates
-      if (!process.argv.includes("--dev")) {
+      if (!isDev) {
         autoUpdater = new AutoUpdaterManager(mainWindow);
         autoUpdater.checkForUpdatesAndNotify();
       }
-    }, 1800);
+    }, APP_CONFIG.timing.splashDuration);
   });
 
   mainWindow.on("closed", () => {
@@ -78,7 +83,7 @@ function createMainWindow() {
   });
 
   // Open DevTools in development mode
-  if (process.argv.includes("--dev")) {
+  if (isDev) {
     mainWindow.webContents.openDevTools();
   }
 }
@@ -132,19 +137,18 @@ app.on("before-quit", () => {
 // Handle opening admin panel
 ipcMain.handle("open-admin-panel", async () => {
   const adminWindow = new BrowserWindow({
-    width: 1200,
-    height: 800,
+    width: APP_CONFIG.window.admin.width,
+    height: APP_CONFIG.window.admin.height,
     backgroundColor: "#0a0a0a",
     webPreferences: {
-      nodeIntegration: false,
-      contextIsolation: true,
-      preload: path.join(__dirname, "preload.js"),
+      ...APP_CONFIG.webPreferences.secure,
+      preload: APP_CONFIG.paths.preload,
     },
   });
 
-  adminWindow.loadFile("src/renderer/admin.html");
+  adminWindow.loadFile(path.join(APP_CONFIG.paths.renderer, "index.html"), { hash: "admin" });
 
-  if (process.argv.includes("--dev")) {
+  if (isDev) {
     adminWindow.webContents.openDevTools();
   }
 

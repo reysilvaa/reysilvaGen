@@ -13,6 +13,9 @@ dist/mac-arm64/
 # Electron Download Cache
 cache/
 
+# Development user data
+dev-user-data/
+
 # Node modules
 node_modules/
 
