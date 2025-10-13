@@ -7,7 +7,7 @@ const { app, BrowserWindow, ipcMain, Menu } = require('electron');
 const path = require('path');
 
 // Configuration
-const { WINDOW, PATHS, WEB_PREFERENCES, TIMING } = require('../config/app-constants');
+const { WINDOW, PATHS, WEB_PREFERENCES, TIMING } = require('../config/appConstants');
 const isDev = process.argv.includes('--dev');
 
 // Development environment setup
@@ -17,14 +17,14 @@ if (isDev) {
 }
 
 // Utilities
-const { wrapHandler, successResponse, errorResponse, lazyServiceHandler } = require('../utils/ipc-handler');
+const { wrapHandler, successResponse, errorResponse, lazyServiceHandler } = require('../utils/ipcHandler');
 const logger = require('../utils/logger');
 
 // Modules
-const ConfigManager = require('../modules/config-manager');
-const CursorResetManager = require('../modules/cursor-reset-manager');
-const TempmailScraper = require('../scrapers/tempmail-scraper');
-const AutoUpdaterManager = require('../utils/auto-updater');
+const ConfigManager = require('../modules/configManager');
+const CursorResetManager = require('../modules/cursorResetManager');
+const TempmailScraper = require('../scrapers/tempmailScraper');
+const AutoUpdaterManager = require('../utils/autoUpdater');
 
 // Application state
 let mainWindow;
@@ -72,25 +72,37 @@ function createMainWindow() {
     },
   });
 
-  mainWindow.loadFile(path.join(PATHS.renderer, 'index.html'));
+  mainWindow.loadFile(path.join(PATHS.renderer, 'app.html'));
 
   // Remove menu bar
   Menu.setApplicationMenu(null);
 
-  mainWindow.once('ready-to-show', () => {
-    setTimeout(() => {
-      if (splashWindow) {
-        splashWindow.close();
-      }
-      mainWindow.show();
-      mainWindow.center();
+  const sendSplashProgress = (progress, status) => {
+    if (splashWindow && !splashWindow.isDestroyed()) {
+      splashWindow.webContents.send('splash-progress', progress, status);
+    }
+  };
 
-      // Initialize auto updater in production
-      if (!isDev) {
-        autoUpdater = new AutoUpdaterManager(mainWindow);
-        autoUpdater.checkForUpdatesAndNotify();
-      }
-    }, TIMING.SPLASH_DURATION);
+  mainWindow.once('ready-to-show', () => {
+    // Send final progress updates
+    sendSplashProgress(90, 'Finalizing application...');
+    
+    setTimeout(() => {
+      sendSplashProgress(100, 'Ready!');
+      setTimeout(() => {
+        if (splashWindow) {
+          splashWindow.close();
+        }
+        mainWindow.show();
+        mainWindow.center();
+
+        // Initialize auto updater in production
+        if (!isDev) {
+          autoUpdater = new AutoUpdaterManager(mainWindow);
+          autoUpdater.checkForUpdatesAndNotify();
+        }
+      }, 500);
+    }, TIMING.SPLASH_DURATION - 500);
   });
 
   mainWindow.on('closed', () => {
@@ -120,7 +132,7 @@ function createAdminWindow() {
       },
     });
 
-  adminWindow.loadFile(path.join(PATHS.renderer, 'index.html'), { hash: 'admin' });
+  adminWindow.loadFile(path.join(PATHS.renderer, 'app.html'), { hash: 'admin' });
 
     if (isDev) {
       adminWindow.webContents.openDevTools();
@@ -203,7 +215,7 @@ ipcMain.handle('load-csv', wrapHandler(async (event, filename) => {
 // Constants Handler - Expose constants to renderer (no dependencies)
 ipcMain.handle('get-app-constants', wrapHandler(async () => {
   try {
-    const constants = require('../config/app-constants');
+    const constants = require('../config/appConstants');
     // Only expose constants that are safe for renderer (exclude paths with __dirname)
     const safeConstants = {
       TIMING: constants.TIMING,

@@ -1,11 +1,14 @@
 /**
- * Card Generator
+ * Card Generator Model
  * Generates valid test credit card numbers using Luhn algorithm
- * @module models/card-generator
+ * @module mvc/models/card-generator
  */
 
-class CardGenerator {
+class CardGenerator extends BaseModel {
   constructor(constants) {
+    // Initialize base model
+    super('CardGenerator', { logLevel: 'info' });
+    
     // Constants are REQUIRED - must be provided from IPC
     if (!constants) {
       throw new Error('CardGenerator requires constants from main process. Use: await window.appConstants.getConstants()');
@@ -25,6 +28,8 @@ class CardGenerator {
     this.MAX_CARD_LENGTH = this.CARD.MAX_LENGTH;
     this.BIN_MIN_LENGTH = this.CARD.BIN_MIN_LENGTH;
     this.BIN_MAX_LENGTH = this.CARD.BIN_MAX_LENGTH;
+    
+    this.log('info', 'CardGenerator initialized with constants');
   }
 
   /**
@@ -475,4 +480,6 @@ class CardGenerator {
 // Export for use in both Node and browser
 if (typeof module !== 'undefined' && module.exports) {
   module.exports = CardGenerator;
+} else {
+  window.CardGenerator = CardGenerator;
 }

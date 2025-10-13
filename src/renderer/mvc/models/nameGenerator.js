@@ -1,11 +1,13 @@
 /**
- * Name Generator - Realistic Fake Names
+ * Name Generator Model - Realistic Fake Names
  * Generates random US names for testing purposes
- * Developed by Reysilva
+ * @module mvc/models/name-generator
  */
 
-class NameGenerator {
+class NameGenerator extends BaseModel {
   constructor() {
+    // Initialize base model
+    super('NameGenerator', { logLevel: 'info' });
     // Popular US first names
     this.firstNamesMale = [
       "James",
@@ -545,4 +547,6 @@ class NameGenerator {
 // Export for use in renderer
 if (typeof module !== "undefined" && module.exports) {
   module.exports = NameGenerator;
+} else {
+  window.NameGenerator = NameGenerator;
 }

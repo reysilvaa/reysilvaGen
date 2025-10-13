@@ -5,7 +5,7 @@
  */
 
 const { BrowserWindow } = require('electron');
-const { WEB, TIMING, XPATH, OTP_PATTERNS, BROWSER_WINDOW } = require('../config/app-constants');
+const { WEB, TIMING, XPATH, OTP_PATTERNS, BROWSER_WINDOW } = require('../config/appConstants');
 const logger = require('../utils/logger').default.child('Tempmail');
 
 class TempmailScraper {
@@ -105,62 +105,62 @@ class TempmailScraper {
       await this._wait(TIMING.TEMPMAIL_LOAD_DELAY);
 
       const result = await this._executeScript(`
-        (function() {
-          console.log('🔍 Scraping existing auto-generated email...');
-          
+              (function() {
+                console.log('🔍 Scraping existing auto-generated email...');
+                
           // Primary XPath for email ID
           const emailXPath = '${XPATH.EMAIL_ID}';
-          const emailResult = document.evaluate(emailXPath, document, null, XPathResult.FIRST_ORDERED_NODE_TYPE, null);
-          const emailDiv = emailResult.singleNodeValue;
-          
-          if (emailDiv && emailDiv.textContent && emailDiv.textContent.trim()) {
-            const autoEmail = emailDiv.textContent.trim();
-            if (autoEmail.includes('@')) {
-              console.log('✅ Found auto-generated email:', autoEmail);
-              return { email: autoEmail, found: true };
-            }
-          }
-          
+                const emailResult = document.evaluate(emailXPath, document, null, XPathResult.FIRST_ORDERED_NODE_TYPE, null);
+                const emailDiv = emailResult.singleNodeValue;
+                
+                if (emailDiv && emailDiv.textContent && emailDiv.textContent.trim()) {
+                  const autoEmail = emailDiv.textContent.trim();
+                  if (autoEmail.includes('@')) {
+                    console.log('✅ Found auto-generated email:', autoEmail);
+                    return { email: autoEmail, found: true };
+                  }
+                }
+                
           // Fallback XPaths
-          const altXPaths = [
-            '//*[@x-text="currentEmail"]',
-            '//*[contains(@class, "text-gray-900") and contains(@class, "font-medium")]',
-            '//*[contains(@class, "font-mono") and contains(text(), "@")]'
-          ];
-          
-          for (const xpath of altXPaths) {
-            const result = document.evaluate(xpath, document, null, XPathResult.FIRST_ORDERED_NODE_TYPE, null);
-            if (result.singleNodeValue) {
-              const email = result.singleNodeValue.textContent.trim();
-              if (email.includes('@')) {
-                console.log('✅ Found email via fallback XPath:', email);
-                return { email: email, found: true };
-              }
-            }
-          }
-          
-          console.log('❌ No auto-generated email found');
-          return { email: null, found: false };
-        })();
-      `);
+                const altXPaths = [
+                  '//*[@x-text="currentEmail"]',
+                  '//*[contains(@class, "text-gray-900") and contains(@class, "font-medium")]',
+                  '//*[contains(@class, "font-mono") and contains(text(), "@")]'
+                ];
+                
+                for (const xpath of altXPaths) {
+                  const result = document.evaluate(xpath, document, null, XPathResult.FIRST_ORDERED_NODE_TYPE, null);
+                  if (result.singleNodeValue) {
+                    const email = result.singleNodeValue.textContent.trim();
+                    if (email.includes('@')) {
+                      console.log('✅ Found email via fallback XPath:', email);
+                      return { email: email, found: true };
+                    }
+                  }
+                }
+                
+                console.log('❌ No auto-generated email found');
+                return { email: null, found: false };
+              })();
+            `);
 
-      if (result.found && result.email) {
-        this.currentEmail = result.email;
+            if (result.found && result.email) {
+              this.currentEmail = result.email;
         logger.success(`Using existing auto-generated email: ${result.email}`);
         return {
-          success: true,
-          email: result.email,
-          message: 'Email scraped from website',
-          isExisting: true
+                success: true, 
+                email: result.email, 
+                message: 'Email scraped from website',
+                isExisting: true
         };
-      } else {
+            } else {
         logger.warn('No existing email found, will need to generate');
         return {
-          success: false,
-          message: 'No existing email found on website'
+                success: false, 
+                message: 'No existing email found on website' 
         };
-      }
-    } catch (error) {
+            }
+          } catch (error) {
       logger.error('Error scraping existing email:', error);
       return { success: false, message: error.message };
     }
@@ -180,54 +180,54 @@ class TempmailScraper {
     await this._wait(TIMING.TEMPMAIL_FORM_DELAY);
 
     const result = await this._executeScript(`
-      (async function() {
+                (async function() {
         // Click New button to show form if present
-        const newBtn = document.querySelector('[x-on\\\\:click*="in_app = true"]');
-        if (newBtn) {
-          newBtn.click();
+                  const newBtn = document.querySelector('[x-on\\\\:click*="in_app = true"]');
+                  if (newBtn) {
+                    newBtn.click();
           await new Promise(r => setTimeout(r, ${TIMING.TEMPMAIL_ACTION_DELAY}));
-        }
-        
+                  }
+                  
         // Fill username
-        const userInput = document.getElementById('user');
-        if (userInput) {
-          userInput.value = '${username}';
-          userInput.dispatchEvent(new Event('input', { bubbles: true }));
-        }
-        
+                  const userInput = document.getElementById('user');
+                  if (userInput) {
+                    userInput.value = '${username}';
+                    userInput.dispatchEvent(new Event('input', { bubbles: true }));
+                  }
+                  
         // Select domain from dropdown
-        const domainOption = document.querySelector('[x-on\\\\:click*="setDomain(\\'${domain}\\')"]');
-        if (domainOption) {
-          domainOption.click();
-          await new Promise(r => setTimeout(r, 200));
-        }
-        
+                  const domainOption = document.querySelector('[x-on\\\\:click*="setDomain(\\'${domain}\\')"]');
+                  if (domainOption) {
+                    domainOption.click();
+                    await new Promise(r => setTimeout(r, 200));
+                  }
+                  
         // Click create button
-        const createBtn = document.getElementById('create');
-        if (createBtn) {
-          createBtn.click();
+                  const createBtn = document.getElementById('create');
+                  if (createBtn) {
+                    createBtn.click();
           await new Promise(r => setTimeout(r, ${TIMING.TEMPMAIL_CREATE_DELAY}));
-        }
-        
-        // Get generated email
-        const emailDiv = document.getElementById('email_id');
-        if (emailDiv && emailDiv.textContent) {
-          return { email: emailDiv.textContent.trim() };
-        }
-        
-        return { email: null };
-      })();
-    `);
-
+                  }
+                  
+                  // Get generated email
+                  const emailDiv = document.getElementById('email_id');
+                  if (emailDiv && emailDiv.textContent) {
+                    return { email: emailDiv.textContent.trim() };
+                  }
+                  
+                  return { email: null };
+                })();
+              `);
+              
     if (result.email) {
-      this.currentEmail = result.email;
+                this.currentEmail = result.email;
       logger.success(`Email created: ${result.email}`);
       return {
         success: true,
         email: result.email,
         message: 'Email created successfully'
       };
-    } else {
+              } else {
       logger.error('Failed to create custom email');
       return {
         success: false,
@@ -247,17 +247,17 @@ class TempmailScraper {
     await this._wait(TIMING.TEMPMAIL_RELOAD_DELAY);
 
     const result = await this._executeScript(`
-      (function() {
-        const emailDiv = document.getElementById('email_id');
-        if (emailDiv && emailDiv.textContent) {
-          return { email: emailDiv.textContent.trim() };
-        }
-        return { email: null };
-      })();
-    `);
+              (function() {
+                const emailDiv = document.getElementById('email_id');
+                if (emailDiv && emailDiv.textContent) {
+                  return { email: emailDiv.textContent.trim() };
+                }
+                return { email: null };
+              })();
+            `);
 
-    if (result.email) {
-      this.currentEmail = result.email;
+            if (result.email) {
+              this.currentEmail = result.email;
       logger.success(`Auto email generated: ${result.email}`);
       return {
         success: true,
@@ -289,9 +289,9 @@ class TempmailScraper {
 
       if (result) {
         return result;
-      } else {
+            } else {
         // Fallback to offline generation
-        const fallback = this.generateFallbackEmail(preferredDomain);
+              const fallback = this.generateFallbackEmail(preferredDomain);
         logger.warn('Using offline fallback email');
         return {
           success: true,
@@ -299,8 +299,8 @@ class TempmailScraper {
           message: 'Email generated (offline)',
           isOffline: true
         };
-      }
-    } catch (error) {
+            }
+          } catch (error) {
       logger.error('Error generating email:', error);
       return { success: false, message: error.message };
     }
@@ -464,102 +464,102 @@ class TempmailScraper {
       await this._wait(TIMING.TEMPMAIL_LOAD_DELAY);
 
       const result = await this._executeScript(`
-        (function() {
-          const emails = [];
-          
+              (function() {
+                const emails = [];
+                
           // Use XPath to find email items with data-id
           const emailXPath = '${XPATH.EMAIL_WITH_DATA_ID}';
-          const emailResult = document.evaluate(emailXPath, document, null, XPathResult.ORDERED_NODE_SNAPSHOT_TYPE, null);
-          
-          console.log('📧 Found email items via XPath:', emailResult.snapshotLength);
-          
-          for (let i = 0; i < emailResult.snapshotLength; i++) {
-            const item = emailResult.snapshotItem(i);
-            const id = item.getAttribute('data-id');
-            
+                const emailResult = document.evaluate(emailXPath, document, null, XPathResult.ORDERED_NODE_SNAPSHOT_TYPE, null);
+                
+                console.log('📧 Found email items via XPath:', emailResult.snapshotLength);
+                
+                for (let i = 0; i < emailResult.snapshotLength; i++) {
+                  const item = emailResult.snapshotItem(i);
+                  const id = item.getAttribute('data-id');
+                  
             // Skip invalid IDs
-            if (!id || id === '0' || id === 'null') {
-              continue;
-            }
-            
+                  if (!id || id === '0' || id === 'null') {
+                    continue;
+                  }
+                  
             // Get child divs for sender and subject
-            const childDivXPath = './div';
-            const childDivResult = document.evaluate(childDivXPath, item, null, XPathResult.ORDERED_NODE_SNAPSHOT_TYPE, null);
-            
-            const senderDiv = childDivResult.snapshotLength > 0 ? childDivResult.snapshotItem(0) : null;
-            const subjectDiv = childDivResult.snapshotLength > 1 ? childDivResult.snapshotItem(1) : null;
-            
+                  const childDivXPath = './div';
+                  const childDivResult = document.evaluate(childDivXPath, item, null, XPathResult.ORDERED_NODE_SNAPSHOT_TYPE, null);
+                  
+                  const senderDiv = childDivResult.snapshotLength > 0 ? childDivResult.snapshotItem(0) : null;
+                  const subjectDiv = childDivResult.snapshotLength > 1 ? childDivResult.snapshotItem(1) : null;
+                  
             // Extract sender info
-            let senderName = 'Unknown';
-            let senderEmail = '';
-            
-            if (senderDiv) {
-              const textNodeXPath = './text()[normalize-space()]';
-              const textResult = document.evaluate(textNodeXPath, senderDiv, null, XPathResult.FIRST_ORDERED_NODE_TYPE, null);
-              if (textResult.singleNodeValue) {
-                senderName = textResult.singleNodeValue.textContent.trim();
-              }
-              
-              const emailXPath = './/div[contains(@class, "text-xs")]';
-              const emailResult = document.evaluate(emailXPath, senderDiv, null, XPathResult.FIRST_ORDERED_NODE_TYPE, null);
-              if (emailResult.singleNodeValue) {
-                senderEmail = emailResult.singleNodeValue.textContent.trim();
-              }
-            }
-            
-            const email = {
-              id,
-              sender: senderName,
-              from: senderEmail,
-              subject: subjectDiv?.textContent.trim() || 'No Subject',
+                  let senderName = 'Unknown';
+                  let senderEmail = '';
+                  
+                  if (senderDiv) {
+                    const textNodeXPath = './text()[normalize-space()]';
+                    const textResult = document.evaluate(textNodeXPath, senderDiv, null, XPathResult.FIRST_ORDERED_NODE_TYPE, null);
+                    if (textResult.singleNodeValue) {
+                      senderName = textResult.singleNodeValue.textContent.trim();
+                    }
+                    
+                    const emailXPath = './/div[contains(@class, "text-xs")]';
+                    const emailResult = document.evaluate(emailXPath, senderDiv, null, XPathResult.FIRST_ORDERED_NODE_TYPE, null);
+                    if (emailResult.singleNodeValue) {
+                      senderEmail = emailResult.singleNodeValue.textContent.trim();
+                    }
+                  }
+                  
+                  const email = {
+                    id,
+                    sender: senderName,
+                    from: senderEmail,
+                    subject: subjectDiv?.textContent.trim() || 'No Subject',
               time: 'Just now',
               date: 'Just now',
-              read: false,
+                    read: false,
               timestamp: Date.now()
-            };
-            
-            emails.push(email);
-          }
-          
+                  };
+                  
+                  emails.push(email);
+                }
+                
           // Sort by timestamp (newest first)
-          emails.sort((a, b) => b.timestamp - a.timestamp);
-          
-          return { emails };
-        })();
-      `);
-
+                emails.sort((a, b) => b.timestamp - a.timestamp);
+                
+                return { emails };
+              })();
+            `);
+            
       // Extract OTP and date for each email
-      for (const email of result.emails) {
+            for (const email of result.emails) {
         const otp = await this._extractOTP(email.id);
-        if (otp) {
-          email.otp = otp;
-          email.preview = `OTP: ${otp} - ${email.subject}`;
-        } else {
-          email.preview = email.subject;
-        }
-
+              if (otp) {
+                email.otp = otp;
+                email.preview = `OTP: ${otp} - ${email.subject}`;
+              } else {
+                email.preview = email.subject;
+              }
+              
         const emailDate = await this._extractEmailDate(email.id);
-        if (emailDate && emailDate !== 'Unknown') {
-          email.time = emailDate;
-          email.date = emailDate;
+              if (emailDate && emailDate !== 'Unknown') {
+                email.time = emailDate;
+                email.date = emailDate;
           email.timestamp = this._parseEmailDate(emailDate);
-        }
-      }
+              }
+            }
 
       // Sort again after updating dates
-      result.emails.sort((a, b) => (b.timestamp || 0) - (a.timestamp || 0));
+            result.emails.sort((a, b) => (b.timestamp || 0) - (a.timestamp || 0));
 
       logger.success(`Inbox checked: ${result.emails.length} email(s) found`);
 
       return {
-        success: true,
-        emails: result.emails,
-        count: result.emails.length,
+              success: true,
+              emails: result.emails,
+              count: result.emails.length,
         message: result.emails.length > 0 
           ? `Found ${result.emails.length} email(s)` 
           : 'Inbox is empty'
       };
-    } catch (error) {
+          } catch (error) {
       logger.error('Error checking inbox:', error);
       return {
         success: false,
@@ -780,7 +780,7 @@ class TempmailScraper {
   generateFallbackEmail(preferredDomain = null) {
     const randomString = Math.random().toString(36).substring(2, 10);
     const domain = preferredDomain && WEB.DEFAULT_DOMAINS.includes(preferredDomain)
-      ? preferredDomain
+      ? preferredDomain 
       : WEB.DEFAULT_DOMAINS[Math.floor(Math.random() * WEB.DEFAULT_DOMAINS.length)];
     
     this.currentEmail = `${randomString}@${domain}`;
@@ -812,7 +812,7 @@ class TempmailScraper {
 
       this.currentEmail = displayedEmail || email;
       logger.success(`Switched to: ${this.currentEmail}`);
-
+      
       return {
         success: true,
         email: this.currentEmail,
@@ -835,7 +835,7 @@ class TempmailScraper {
   async deleteCurrentEmail() {
     try {
       logger.info(`Deleting email: ${this.currentEmail}`);
-
+      
       if (!this.window) {
         return {
           success: false,

@@ -1,6 +1,14 @@
-const Sidebar = {
-  render() {
-    return `
+/**
+ * Sidebar Component View
+ * Navigation sidebar for the main application
+ * @module mvc/views/components/sidebar
+ */
+
+class SidebarView extends BaseView {
+  constructor() {
+    super('Sidebar', { logLevel: 'info' });
+    
+    this.setTemplate(`
       <aside class="sidebar">
         <div class="sidebar-header">
           <div class="logo-section">
@@ -85,8 +93,78 @@ const Sidebar = {
           </div>
         </div>
       </aside>
-    `;
-  },
-};
+    `);
+    
+    // Set up navigation events
+    this.on('click .nav-item', this.handleNavClick);
+    this.on('click #check-update-btn', this.handleUpdateCheck);
+  }
 
-window.Sidebar = Sidebar;
+  /**
+   * Handle navigation item click
+   */
+  handleNavClick(event) {
+    const navItem = event.currentTarget;
+    const tab = navItem.getAttribute('data-tab');
+    
+    if (tab) {
+      // Remove active class from all nav items
+      document.querySelectorAll('.nav-item').forEach(item => {
+        item.classList.remove('active');
+      });
+      
+      // Add active class to clicked item
+      navItem.classList.add('active');
+      
+      // Trigger tab change event
+      if (window.AppInit && window.AppInit.switchTab) {
+        window.AppInit.switchTab(tab);
+      }
+      
+      this.log('info', `Navigation to ${tab} tab`);
+    }
+  }
+
+  /**
+   * Handle update check button click
+   */
+  handleUpdateCheck(event) {
+    event.preventDefault();
+    
+    if (window.electron && window.electron.checkForUpdates) {
+      window.electron.checkForUpdates();
+      this.log('info', 'Update check requested');
+    } else {
+      this.log('warn', 'Update check not available');
+    }
+  }
+
+  /**
+   * Update app version display
+   */
+  updateVersion(version) {
+    this.setData({ appVersion: version });
+  }
+
+  /**
+   * Update update status display
+   */
+  updateStatus(status, message) {
+    const statusElement = document.getElementById('update-status');
+    if (statusElement) {
+      statusElement.textContent = message;
+      statusElement.style.display = status ? 'block' : 'none';
+    }
+  }
+}
+
+// Export for use in both Node and browser
+if (typeof module !== 'undefined' && module.exports) {
+  module.exports = SidebarView;
+} else {
+  window.SidebarView = SidebarView;
+  // Backward compatibility
+  window.Sidebar = {
+    render: () => new SidebarView().render()
+  };
+}

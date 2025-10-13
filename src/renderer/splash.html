@@ -292,6 +292,16 @@
         justify-content: center;
         gap: 8px;
         animation: pulse 2s ease-in-out infinite;
+        min-height: 18px;
+      }
+
+      .progress-text {
+        font-size: 11px;
+        color: rgba(255, 255, 255, 0.5);
+        margin-top: 8px;
+        font-weight: 600;
+        letter-spacing: 0.5px;
+        text-align: center;
       }
 
       .status::before {
@@ -370,9 +380,10 @@
         
         <div class="loader-container">
           <div class="loader">
-            <div class="loader-bar"></div>
+            <div class="loader-bar" id="progress-bar"></div>
           </div>
-          <div class="status">Initializing Application</div>
+          <div class="status" id="loading-status">Initializing Application...</div>
+          <div class="progress-text" id="progress-text">0%</div>
         </div>
       </div>
 
@@ -383,5 +394,100 @@
         </div>
       </div>
     </div>
+
+    <script>
+      // Real-time splash screen progress tracking
+      class SplashProgress {
+        constructor() {
+          this.progressBar = document.getElementById('progress-bar');
+          this.statusText = document.getElementById('loading-status');
+          this.progressText = document.getElementById('progress-text');
+          this.currentProgress = 0;
+          this.targetProgress = 0;
+          
+          // Listen for progress updates from main process
+          if (window.splashAPI && window.splashAPI.onProgress) {
+            window.splashAPI.onProgress((progress, status) => {
+              this.updateProgress(progress, status);
+              // Cancel simulation if real progress is received
+              if (progress > 0) {
+                this.realProgressReceived = true;
+              }
+            });
+          }
+          
+          this.startSimulation();
+        }
+
+        updateProgress(progress, status) {
+          this.targetProgress = Math.max(0, Math.min(100, progress));
+          if (status) {
+            this.statusText.textContent = status;
+          }
+          this.animateProgress();
+        }
+
+        animateProgress() {
+          const animate = () => {
+            if (Math.abs(this.currentProgress - this.targetProgress) < 0.5) {
+              this.currentProgress = this.targetProgress;
+            } else {
+              this.currentProgress += (this.targetProgress - this.currentProgress) * 0.1;
+            }
+            
+            this.progressBar.style.width = this.currentProgress + '%';
+            this.progressText.textContent = Math.round(this.currentProgress) + '%';
+            
+            if (this.currentProgress !== this.targetProgress) {
+              requestAnimationFrame(animate);
+            }
+          };
+          animate();
+        }
+
+        startSimulation() {
+          // Simulate loading steps if no real progress is received
+          this.realProgressReceived = false;
+          
+          const steps = [
+            { progress: 10, status: 'Loading configuration...', delay: 200 },
+            { progress: 25, status: 'Initializing MVC architecture...', delay: 400 },
+            { progress: 40, status: 'Loading base classes...', delay: 300 },
+            { progress: 55, status: 'Loading models...', delay: 300 },
+            { progress: 70, status: 'Loading views...', delay: 300 },
+            { progress: 85, status: 'Loading controllers...', delay: 300 },
+            { progress: 95, status: 'Finalizing initialization...', delay: 200 },
+            { progress: 100, status: 'Ready!', delay: 100 }
+          ];
+
+          let stepIndex = 0;
+          const executeStep = () => {
+            // Stop simulation if real progress is received
+            if (this.realProgressReceived) {
+              return;
+            }
+            
+            if (stepIndex < steps.length) {
+              const step = steps[stepIndex];
+              setTimeout(() => {
+                if (!this.realProgressReceived) {
+                  this.updateProgress(step.progress, step.status);
+                  stepIndex++;
+                  executeStep();
+                }
+              }, step.delay);
+            }
+          };
+
+          // Start simulation after a short delay
+          setTimeout(executeStep, 300);
+        }
+      }
+
+      // Initialize splash progress when DOM is ready
+      document.addEventListener('DOMContentLoaded', () => {
+        new SplashProgress();
+      });
+    </script>
   </body>
 </html>

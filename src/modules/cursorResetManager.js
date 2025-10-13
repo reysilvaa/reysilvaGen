@@ -9,7 +9,7 @@ const path = require('path');
 const crypto = require('crypto');
 const { exec } = require('child_process');
 const { promisify } = require('util');
-const { CURSOR_PATHS, TIMING, LOG, CRYPTO } = require('../config/app-constants');
+const { CURSOR_PATHS, TIMING, LOG, CRYPTO } = require('../config/appConstants');
 const { Logger } = require('../utils/logger');
 
 const execAsync = promisify(exec);

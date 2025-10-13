@@ -1,7 +1,7 @@
 /**
  * Base Controller Class
- * Provides common functionality and standardized patterns for all controllers
- * @module renderer/controllers/base-controller
+ * Provides common functionality and standardized patterns for all MVC controllers
+ * @module mvc/controllers/BaseController
  */
 
 class BaseController {

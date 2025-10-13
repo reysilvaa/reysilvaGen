@@ -1,11 +1,14 @@
 /**
- * US Address Generator - Real Data from CSV
+ * US Address Generator Model - Real Data from CSV
  * Generates random US addresses from real CSV data
- * Developed by Reysilva
+ * @module mvc/models/address-generator
  */
 
-class AddressGenerator {
+class AddressGenerator extends BaseModel {
   constructor(csvLoader = null) {
+    // Initialize base model
+    super('AddressGenerator', { logLevel: 'info' });
+    
     this.csvLoader = csvLoader;
     // Real US street names
     this.streetNames = [
@@ -356,4 +359,6 @@ class AddressGenerator {
 // Export for use in renderer
 if (typeof module !== "undefined" && module.exports) {
   module.exports = AddressGenerator;
+} else {
+  window.AddressGenerator = AddressGenerator;
 }

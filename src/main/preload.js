@@ -73,3 +73,8 @@ contextBridge.exposeInMainWorld("csvLoader", {
 contextBridge.exposeInMainWorld("appConstants", {
   getConstants: () => ipcRenderer.invoke("get-app-constants"),
 });
+
+// Splash Screen API - For progress updates
+contextBridge.exposeInMainWorld("splashAPI", {
+  onProgress: (callback) => ipcRenderer.on("splash-progress", (_, progress, status) => callback(progress, status)),
+});

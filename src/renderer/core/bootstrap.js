@@ -1,12 +1,26 @@
 /**
- * Universal Bootstrap - KISS Principle
- * One file to rule them all
+ * MVC Application Bootstrap
+ * Loads and initializes the MVC architecture components
+ * @module core/bootstrap
  */
 
 (function () {
   "use strict";
 
-  const Bootstrap = {
+  const AppBootstrap = {
+    progressCallback: null,
+    
+    setProgressCallback(callback) {
+      this.progressCallback = callback;
+    },
+
+    updateProgress(progress, status) {
+      if (this.progressCallback) {
+        this.progressCallback(progress, status);
+      }
+      console.log(`📊 ${Math.round(progress)}% - ${status}`);
+    },
+
     loadScript(src) {
       return new Promise((resolve, reject) => {
         const script = document.createElement("script");
@@ -18,43 +32,63 @@
     },
 
     async loadScripts(scripts) {
-      for (const script of scripts) await this.loadScript(script);
+      const total = scripts.length;
+      for (let i = 0; i < scripts.length; i++) {
+        const script = scripts[i];
+        const progress = ((i + 1) / total) * 80; // 80% for script loading
+        const fileName = script.split('/').pop();
+        this.updateProgress(progress, `Loading ${fileName}...`);
+        await this.loadScript(script);
+      }
     },
 
     async initMain() {
-      console.log("🚀 Loading main app...");
+      console.log("🚀 Loading MVC main application...");
+      this.updateProgress(5, "Initializing MVC architecture...");
 
       await this.loadScripts([
-        // Base Controller (must load first)
-        "controllers/base-controller.js",
-        // Shared Components
-        "components/shared/component-loader.js",
-        "components/shared/sidebar.js",
-        "components/shared/footer.js",
-        "components/shared/loading-overlay.js",
-        // Tab Components
-        "components/tabs/cards-tab.js",
-        "components/tabs/address-tab.js",
-        "components/tabs/combined-tab.js",
-        "components/tabs/cursor-reset-tab.js",
-        "components/tabs/tempmail-tab.js",
+        // MVC Base Classes (must load first)
+        "mvc/models/BaseModel.js",
+        "mvc/views/BaseView.js", 
+        "mvc/controllers/baseController.js",
+        
         // Models
-        "../models/card-generator.js",
-        "../models/name-generator.js",
-        "../models/address-generator.js",
-        // Modules
-        "../modules/csv-loader.js",
-        // Controllers (Modular)
-        "controllers/cards-controller.js",
-        "controllers/address-controller.js",
-        "controllers/combined-controller.js",
-        "controllers/cursor-controller.js",
-        "controllers/tempmail-controller.js",
-        // Utils & Init
-        "utils/utils.js",
-        "dialog.js",
-        "app-init.js",
+        "mvc/models/cardGenerator.js",
+        "mvc/models/nameGenerator.js",
+        "mvc/models/addressGenerator.js",
+        
+        // Views - Layouts
+        "mvc/views/layouts/MainLayout.js",
+        "mvc/views/layouts/AdminLayout.js",
+        
+        // Views - Components
+        "mvc/views/components/componentLoader.js",
+        "mvc/views/components/sidebar.js",
+        "mvc/views/components/footer.js",
+        "mvc/views/components/loadingOverlay.js",
+        
+        // Views - Pages
+        "mvc/views/pages/cardsTab.js",  
+        "mvc/views/pages/addressTab.js",
+        "mvc/views/pages/combinedTab.js",
+        "mvc/views/pages/cursorResetTab.js",
+        "mvc/views/pages/tempmailTab.js",
+        
+        // Controllers
+        "mvc/controllers/cardsController.js",
+        "mvc/controllers/addressController.js",
+        "mvc/controllers/combinedController.js",
+        "mvc/controllers/cursorController.js",
+        "mvc/controllers/tempmailController.js",
+        
+        // Core & Modules
+        "../modules/csvLoader.js",
+        "core/utils.js",
+        "core/dialog.js",
+        "core/appInit.js",
       ]);
+
+      this.updateProgress(85, "Rendering UI components...");
 
       // Render UI
       const sidebar = document.getElementById("sidebar-container");
@@ -76,8 +110,13 @@
       const loading = document.getElementById("loading-overlay-container");
       if (loading) loading.innerHTML = window.LoadingOverlay.render();
 
+      this.updateProgress(95, "Initializing application logic...");
+
       // Initialize app logic
-      setTimeout(() => window.AppInit.init(), 100);
+      setTimeout(() => {
+        this.updateProgress(100, "Application ready!");
+        window.AppInit.init();
+      }, 100);
     },
 
     async initAdmin() {
@@ -133,5 +172,5 @@
     },
   };
 
-  window.AppBootstrap = Bootstrap;
+  window.AppBootstrap = AppBootstrap;
 })();
