@@ -25,6 +25,8 @@
       console.log("🚀 Loading main app...");
 
       await this.loadScripts([
+        // Base Controller (must load first)
+        "controllers/base-controller.js",
         // Shared Components
         "components/shared/component-loader.js",
         "components/shared/sidebar.js",
@@ -42,12 +44,12 @@
         "../models/address-generator.js",
         // Modules
         "../modules/csv-loader.js",
-        // Controllers
+        // Controllers (Modular)
         "controllers/cards-controller.js",
         "controllers/address-controller.js",
         "controllers/combined-controller.js",
         "controllers/cursor-controller.js",
-        "controllers/tempmail-init.js",
+        "controllers/tempmail-controller.js",
         // Utils & Init
         "utils/utils.js",
         "dialog.js",

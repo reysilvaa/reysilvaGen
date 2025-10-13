@@ -68,3 +68,8 @@ contextBridge.exposeInMainWorld("autoUpdater", {
 contextBridge.exposeInMainWorld("csvLoader", {
   loadCSV: (filename) => ipcRenderer.invoke("load-csv", filename),
 });
+
+// Constants API - Expose app constants to renderer
+contextBridge.exposeInMainWorld("appConstants", {
+  getConstants: () => ipcRenderer.invoke("get-app-constants"),
+});

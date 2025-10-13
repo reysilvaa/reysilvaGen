@@ -1,126 +1,375 @@
-const { app, BrowserWindow, ipcMain, Menu } = require("electron");
-const path = require("path");
+/**
+ * Main Process - Electron Application Entry Point
+ * @module main/main
+ */
+
+const { app, BrowserWindow, ipcMain, Menu } = require('electron');
+const path = require('path');
 
 // Configuration
-const { APP_CONFIG } = require("../config/constants");
-const isDev = process.argv.includes("--dev");
+const { WINDOW, PATHS, WEB_PREFERENCES, TIMING } = require('../config/app-constants');
+const isDev = process.argv.includes('--dev');
 
+// Development environment setup
 if (isDev) {
-  const { setupDevelopmentEnvironment } = require("../config/development");
+  const { setupDevelopmentEnvironment } = require('../config/development');
   setupDevelopmentEnvironment(app);
 }
 
+// Utilities
+const { wrapHandler, successResponse, errorResponse, lazyServiceHandler } = require('../utils/ipc-handler');
+const logger = require('../utils/logger');
+
 // Modules
-const ConfigManager = require("../modules/config-manager");
-const CursorResetManager = require("../modules/cursor-reset-manager");
+const ConfigManager = require('../modules/config-manager');
+const CursorResetManager = require('../modules/cursor-reset-manager');
+const TempmailScraper = require('../scrapers/tempmail-scraper');
+const AutoUpdaterManager = require('../utils/auto-updater');
 
-// Scrapers
-const TempmailScraper = require("../scrapers/tempmail-scraper");
-
-// Utils
-const AutoUpdaterManager = require("../utils/auto-updater");
-
+// Application state
 let mainWindow;
 let splashWindow;
 let config;
 let tempmailHeadless;
 let autoUpdater;
 
+/**
+ * Create splash screen window
+ */
 function createSplashScreen() {
   splashWindow = new BrowserWindow({
-    width: APP_CONFIG.window.splash.width,
-    height: APP_CONFIG.window.splash.height,
+    width: WINDOW.splash.width,
+    height: WINDOW.splash.height,
     transparent: true,
     frame: false,
     alwaysOnTop: true,
     resizable: false,
-    icon: APP_CONFIG.icons.main,
-    webPreferences: APP_CONFIG.webPreferences.secure,
+    icon: PATHS.icons.main,
+    webPreferences: WEB_PREFERENCES.secure,
   });
 
-  splashWindow.loadFile(path.join(APP_CONFIG.paths.renderer, "splash.html"));
+  splashWindow.loadFile(path.join(PATHS.renderer, 'splash.html'));
   splashWindow.center();
+  
+  logger.info('Splash screen created');
 }
 
+/**
+ * Create main application window
+ */
 function createMainWindow() {
   mainWindow = new BrowserWindow({
-    width: APP_CONFIG.window.main.width,
-    height: APP_CONFIG.window.main.height,
-    minWidth: APP_CONFIG.window.main.minWidth,
-    minHeight: APP_CONFIG.window.main.minHeight,
+    width: WINDOW.main.width,
+    height: WINDOW.main.height,
+    minWidth: WINDOW.main.minWidth,
+    minHeight: WINDOW.main.minHeight,
     show: false,
-    backgroundColor: "#0a0a0a",
-    icon: APP_CONFIG.icons.main,
+    backgroundColor: WINDOW.main.backgroundColor,
+    icon: PATHS.icons.main,
     webPreferences: {
-      ...APP_CONFIG.webPreferences.secure,
-      preload: APP_CONFIG.paths.preload,
+      ...WEB_PREFERENCES.secure,
+      preload: PATHS.preload,
     },
   });
 
-  mainWindow.loadFile(path.join(APP_CONFIG.paths.renderer, "index.html"));
+  mainWindow.loadFile(path.join(PATHS.renderer, 'index.html'));
 
   // Remove menu bar
   Menu.setApplicationMenu(null);
 
-  mainWindow.once("ready-to-show", () => {
+  mainWindow.once('ready-to-show', () => {
     setTimeout(() => {
       if (splashWindow) {
         splashWindow.close();
       }
       mainWindow.show();
       mainWindow.center();
-      
-      // Initialize auto updater and check for updates
+
+      // Initialize auto updater in production
       if (!isDev) {
         autoUpdater = new AutoUpdaterManager(mainWindow);
         autoUpdater.checkForUpdatesAndNotify();
       }
-    }, APP_CONFIG.timing.splashDuration);
+    }, TIMING.SPLASH_DURATION);
   });
 
-  mainWindow.on("closed", () => {
+  mainWindow.on('closed', () => {
     mainWindow = null;
+    logger.info('Main window closed');
   });
 
   // Open DevTools in development mode
   if (isDev) {
     mainWindow.webContents.openDevTools();
   }
+  
+  logger.info('Main window created');
 }
 
-// IPC Handlers for Auto Update
-ipcMain.handle('check-for-updates', async () => {
-  if (!autoUpdater) return { success: false, error: 'Auto updater not initialized' };
+/**
+ * Create admin panel window
+ */
+function createAdminWindow() {
+    const adminWindow = new BrowserWindow({
+    width: WINDOW.admin.width,
+    height: WINDOW.admin.height,
+    backgroundColor: WINDOW.main.backgroundColor,
+      webPreferences: {
+      ...WEB_PREFERENCES.secure,
+      preload: PATHS.preload,
+      },
+    });
+
+  adminWindow.loadFile(path.join(PATHS.renderer, 'index.html'), { hash: 'admin' });
+
+    if (isDev) {
+      adminWindow.webContents.openDevTools();
+    }
+
+  logger.info('Admin window created');
+  return adminWindow;
+}
+
+/**
+ * Get or create tempmail service instance
+ */
+function getTempmailService() {
+  if (!tempmailHeadless) {
+    tempmailHeadless = new TempmailScraper();
+  }
+  return tempmailHeadless;
+}
+
+// ==================== IPC HANDLERS ====================
+
+// Auto Updater Handlers
+ipcMain.handle('check-for-updates', wrapHandler(async () => {
+  if (!autoUpdater) {
+    return errorResponse('Auto updater not initialized');
+  }
   return await autoUpdater.checkForUpdates();
-});
+}));
 
-ipcMain.handle('download-update', async () => {
-  if (!autoUpdater) return { success: false, error: 'Auto updater not initialized' };
+ipcMain.handle('download-update', wrapHandler(async () => {
+  if (!autoUpdater) {
+    return errorResponse('Auto updater not initialized');
+  }
   return await autoUpdater.downloadUpdate();
-});
+}));
 
-ipcMain.handle('install-update', () => {
-  if (!autoUpdater) return;
+ipcMain.handle('install-update', wrapHandler(() => {
+  if (!autoUpdater) {
+    return;
+  }
   autoUpdater.installUpdate();
-});
+}));
+
+// Admin Panel Handler
+ipcMain.handle('open-admin-panel', wrapHandler(async () => {
+  createAdminWindow();
+  return successResponse();
+}));
+
+// Admin Authentication Handlers
+ipcMain.handle('admin-login', wrapHandler(async (event, { username, password }) => {
+  return config.authenticateAdmin(username, password);
+}));
+
+ipcMain.handle('admin-verify-session', wrapHandler(async (event, sessionToken) => {
+  return config.verifySession(sessionToken);
+}));
+
+ipcMain.handle('admin-logout', wrapHandler(async (event, sessionToken) => {
+  config.logout(sessionToken);
+  return successResponse();
+}));
+
+// BIN Management Handlers
+ipcMain.handle('get-all-bins', wrapHandler(async () => {
+  return successResponse({ bins: config.getAllBins() });
+}));
+
+ipcMain.handle('get-active-bins', wrapHandler(async () => {
+  return successResponse({ bins: config.getActiveBins() });
+}));
+
+ipcMain.handle('load-csv', wrapHandler(async (event, filename) => {
+  const fs = require('fs');
+  const csvPath = path.join(__dirname, '../../assets/address', filename);
+  const csvData = fs.readFileSync(csvPath, 'utf-8');
+  return successResponse({ data: csvData });
+}));
+
+// Constants Handler - Expose constants to renderer (no dependencies)
+ipcMain.handle('get-app-constants', wrapHandler(async () => {
+  try {
+    const constants = require('../config/app-constants');
+    // Only expose constants that are safe for renderer (exclude paths with __dirname)
+    const safeConstants = {
+      TIMING: constants.TIMING,
+      SESSION: constants.SESSION,
+      CRYPTO: constants.CRYPTO,
+      CARD: constants.CARD,
+      FILES: constants.FILES,
+      WEB: constants.WEB,
+      VALIDATION: constants.VALIDATION,
+      XPATH: constants.XPATH,
+      OTP_PATTERNS: constants.OTP_PATTERNS,
+      DATE_FORMAT: constants.DATE_FORMAT,
+      RETRY: constants.RETRY,
+      BROWSER_WINDOW: constants.BROWSER_WINDOW,
+      LOG: constants.LOG,
+      CARD_TYPES: constants.CARD_TYPES,
+    };
+    console.log('✅ Constants loaded successfully for renderer');
+    return successResponse(safeConstants);
+  } catch (error) {
+    console.error('❌ Failed to load constants:', error);
+    return errorResponse('Failed to load constants', { error: error.message });
+  }
+}));
+
+console.log('✅ IPC handler "get-app-constants" registered');
+
+ipcMain.handle('add-bin', wrapHandler(async (event, { binPattern, cardType, description, createdBy }) => {
+      return config.addBin(binPattern, cardType, description, createdBy);
+}));
+
+ipcMain.handle('update-bin', wrapHandler(async (event, { id, binPattern, cardType, description }) => {
+    return config.updateBin(id, binPattern, cardType, description);
+}));
+
+ipcMain.handle('delete-bin', wrapHandler(async (event, id) => {
+    return config.deleteBin(id);
+}));
+
+// Settings Handlers
+ipcMain.handle('get-setting', wrapHandler(async (event, key) => {
+  return successResponse({ value: config.getSetting(key) });
+}));
+
+ipcMain.handle('set-setting', wrapHandler(async (event, { key, value }) => {
+    config.setSetting(key, value);
+  return successResponse();
+}));
+
+// Config Management Handlers
+ipcMain.handle('get-config-path', wrapHandler(async () => {
+  return successResponse({ path: config.getConfigPath() });
+}));
+
+ipcMain.handle('get-app-version', wrapHandler(async () => {
+  return successResponse({ version: app.getVersion() });
+}));
+
+ipcMain.handle('reset-config', wrapHandler(async () => {
+    config.resetToDefault();
+  return successResponse();
+}));
+
+// Cursor Reset Handlers
+ipcMain.handle('cursor-reset-machine-id', wrapHandler(async () => {
+    const resetManager = new CursorResetManager();
+  return await resetManager.resetMachineId();
+}));
+
+ipcMain.handle('cursor-close', wrapHandler(async () => {
+    const resetManager = new CursorResetManager();
+    const success = await resetManager.killCursor();
+    return {
+      success,
+    message: success ? 'Cursor berhasil ditutup' : 'Cursor tidak sedang berjalan',
+  };
+}));
+
+ipcMain.handle('cursor-check-status', wrapHandler(async () => {
+    const resetManager = new CursorResetManager();
+    const isRunning = await resetManager.isCursorRunning();
+    return { isRunning };
+}));
+
+// Tempmail Handlers - Using lazy service pattern
+ipcMain.handle('tempmail-scrape-existing', lazyServiceHandler(
+  getTempmailService,
+  async (service) => await service.scrapeExistingEmail()
+));
+
+ipcMain.handle('tempmail-generate', lazyServiceHandler(
+  getTempmailService,
+  async (service, event, domain, customEmail) => await service.generateEmail(domain, customEmail)
+));
+
+ipcMain.handle('tempmail-check-inbox', wrapHandler(async () => {
+  if (!tempmailHeadless) {
+    return errorResponse('No email generated yet', { emails: [] });
+  }
+  return await tempmailHeadless.checkInbox();
+}));
+
+ipcMain.handle('tempmail-read-email', wrapHandler(async (event, emailId) => {
+  if (!tempmailHeadless) {
+    return errorResponse('No email generated yet');
+  }
+  return await tempmailHeadless.readEmail(emailId);
+}));
+
+ipcMain.handle('tempmail-get-current', wrapHandler(async () => {
+  if (!tempmailHeadless) {
+    return errorResponse('No email session', { email: null });
+  }
+    const email = tempmailHeadless.getCurrentEmail();
+  return successResponse({ email });
+}));
+
+ipcMain.handle('tempmail-clear', wrapHandler(async () => {
+    if (tempmailHeadless) {
+      tempmailHeadless.clear();
+      tempmailHeadless = null;
+    }
+  return successResponse();
+}));
+
+ipcMain.handle('tempmail-toggle-debug', wrapHandler(async () => {
+  if (!tempmailHeadless) {
+    return errorResponse('No window available');
+  }
+  return tempmailHeadless.toggleDebug();
+}));
+
+ipcMain.handle('tempmail-switch', lazyServiceHandler(
+  getTempmailService,
+  async (service, event, email) => await service.switchToEmail(email)
+));
+
+ipcMain.handle('tempmail-delete', wrapHandler(async () => {
+  if (!tempmailHeadless) {
+    return errorResponse('No active email');
+  }
+  return await tempmailHeadless.deleteCurrentEmail();
+}));
+
+// ==================== APPLICATION LIFECYCLE ====================
 
 app.whenReady().then(async () => {
+  logger.info('Application starting...');
+  
   config = new ConfigManager();
-
   config.cleanupExpiredSessions();
 
   createSplashScreen();
   createMainWindow();
 
-  app.on("activate", () => {
+  app.on('activate', () => {
     if (BrowserWindow.getAllWindows().length === 0) {
       createMainWindow();
     }
   });
+  
+  logger.success('Application ready');
 });
 
-app.on("window-all-closed", () => {
-  if (process.platform !== "darwin") {
+app.on('window-all-closed', () => {
+  if (process.platform !== 'darwin') {
     if (config) {
       config.close();
     }
@@ -128,276 +377,18 @@ app.on("window-all-closed", () => {
   }
 });
 
-app.on("before-quit", () => {
+app.on('before-quit', () => {
   if (config) {
     config.close();
   }
+  logger.info('Application shutting down');
 });
 
-// Handle opening admin panel
-ipcMain.handle("open-admin-panel", async () => {
-  const adminWindow = new BrowserWindow({
-    width: APP_CONFIG.window.admin.width,
-    height: APP_CONFIG.window.admin.height,
-    backgroundColor: "#0a0a0a",
-    webPreferences: {
-      ...APP_CONFIG.webPreferences.secure,
-      preload: APP_CONFIG.paths.preload,
-    },
-  });
-
-  adminWindow.loadFile(path.join(APP_CONFIG.paths.renderer, "index.html"), { hash: "admin" });
-
-  if (isDev) {
-    adminWindow.webContents.openDevTools();
-  }
-
-  return { success: true };
+// Handle uncaught exceptions
+process.on('uncaughtException', (error) => {
+  logger.error('Uncaught exception:', error);
 });
 
-ipcMain.handle("admin-login", async (event, { username, password }) => {
-  try {
-    return config.authenticateAdmin(username, password);
-  } catch (error) {
-    return { success: false, message: error.message };
-  }
-});
-
-ipcMain.handle("admin-verify-session", async (event, sessionToken) => {
-  try {
-    return config.verifySession(sessionToken);
-  } catch (error) {
-    return { valid: false };
-  }
-});
-
-ipcMain.handle("admin-logout", async (event, sessionToken) => {
-  try {
-    config.logout(sessionToken);
-    return { success: true };
-  } catch (error) {
-    return { success: false, message: error.message };
-  }
-});
-
-ipcMain.handle("get-all-bins", async (event) => {
-  try {
-    return { success: true, bins: config.getAllBins() };
-  } catch (error) {
-    return { success: false, message: error.message, bins: [] };
-  }
-});
-
-ipcMain.handle("get-active-bins", async (event) => {
-  try {
-    return { success: true, bins: config.getActiveBins() };
-  } catch (error) {
-    return { success: false, message: error.message, bins: [] };
-  }
-});
-
-ipcMain.handle("load-csv", async (event, filename) => {
-  try {
-    const fs = require('fs');
-    const csvPath = path.join(__dirname, '../../assets/address', filename);
-    const csvData = fs.readFileSync(csvPath, 'utf-8');
-    return { success: true, data: csvData };
-  } catch (error) {
-    console.error('Error loading CSV:', error);
-    return { success: false, error: error.message };
-  }
-});
-
-ipcMain.handle(
-  "add-bin",
-  async (event, { binPattern, cardType, description, createdBy }) => {
-    try {
-      return config.addBin(binPattern, cardType, description, createdBy);
-    } catch (error) {
-      return { success: false, message: error.message };
-    }
-  }
-);
-
-ipcMain.handle(
-  "update-bin",
-  async (event, { id, binPattern, cardType, description }) => {
-    try {
-      return config.updateBin(id, binPattern, cardType, description);
-    } catch (error) {
-      return { success: false, message: error.message };
-    }
-  }
-);
-
-ipcMain.handle("delete-bin", async (event, id) => {
-  try {
-    return config.deleteBin(id);
-  } catch (error) {
-    return { success: false, message: error.message };
-  }
-});
-
-ipcMain.handle("get-setting", async (event, key) => {
-  try {
-    return { success: true, value: config.getSetting(key) };
-  } catch (error) {
-    return { success: false, message: error.message };
-  }
-});
-
-ipcMain.handle("set-setting", async (event, { key, value }) => {
-  try {
-    config.setSetting(key, value);
-    return { success: true };
-  } catch (error) {
-    return { success: false, message: error.message };
-  }
-});
-
-ipcMain.handle("get-config-path", async () => {
-  try {
-    return { success: true, path: config.getConfigPath() };
-  } catch (error) {
-    return { success: false, message: error.message };
-  }
-});
-
-ipcMain.handle("get-app-version", async () => {
-  try {
-    return { success: true, version: app.getVersion() };
-  } catch (error) {
-    return { success: false, message: error.message };
-  }
-});
-
-ipcMain.handle("reset-config", async () => {
-  try {
-    config.resetToDefault();
-    return { success: true };
-  } catch (error) {
-    return { success: false, message: error.message };
-  }
-});
-
-// Cursor Reset Operations
-ipcMain.handle("cursor-reset-machine-id", async () => {
-  try {
-    const resetManager = new CursorResetManager();
-    const result = await resetManager.resetMachineId();
-    return result;
-  } catch (error) {
-    return { success: false, message: error.message, logs: [] };
-  }
-});
-
-ipcMain.handle("cursor-close", async () => {
-  try {
-    const resetManager = new CursorResetManager();
-    const success = await resetManager.killCursor();
-    return {
-      success,
-      message: success
-        ? "Cursor berhasil ditutup"
-        : "Cursor tidak sedang berjalan",
-    };
-  } catch (error) {
-    return { success: false, message: error.message };
-  }
-});
-
-ipcMain.handle("cursor-check-status", async () => {
-  try {
-    const resetManager = new CursorResetManager();
-    const isRunning = await resetManager.isCursorRunning();
-    return { isRunning };
-  } catch (error) {
-    return { isRunning: false, error: error.message };
-  }
-});
-
-// Tempmail Operations - Headless Browser
-ipcMain.handle("tempmail-scrape-existing", async () => {
-  try {
-    if (!tempmailHeadless) tempmailHeadless = new TempmailScraper();
-    return await tempmailHeadless.scrapeExistingEmail();
-  } catch (error) {
-    return { success: false, message: error.message };
-  }
-});
-
-ipcMain.handle("tempmail-generate", async (event, domain, customEmail) => {
-  try {
-    if (!tempmailHeadless) tempmailHeadless = new TempmailScraper();
-    return await tempmailHeadless.generateEmail(domain, customEmail);
-  } catch (error) {
-    return { success: false, message: error.message };
-  }
-});
-
-ipcMain.handle("tempmail-check-inbox", async () => {
-  try {
-    if (!tempmailHeadless) return { success: false, message: "No email generated yet", emails: [] };
-    return await tempmailHeadless.checkInbox();
-  } catch (error) {
-    return { success: false, message: error.message, emails: [] };
-  }
-});
-
-ipcMain.handle("tempmail-read-email", async (event, emailId) => {
-  try {
-    if (!tempmailHeadless) return { success: false, message: "No email generated yet" };
-    return await tempmailHeadless.readEmail(emailId);
-  } catch (error) {
-    return { success: false, message: error.message };
-  }
-});
-
-ipcMain.handle("tempmail-get-current", async () => {
-  try {
-    if (!tempmailHeadless) return { success: false, email: null };
-    const email = tempmailHeadless.getCurrentEmail();
-    return { success: true, email };
-  } catch (error) {
-    return { success: false, message: error.message, email: null };
-  }
-});
-
-ipcMain.handle("tempmail-clear", async () => {
-  try {
-    if (tempmailHeadless) {
-      tempmailHeadless.clear();
-      tempmailHeadless = null;
-    }
-    return { success: true };
-  } catch (error) {
-    return { success: false, message: error.message };
-  }
-});
-
-ipcMain.handle("tempmail-toggle-debug", async () => {
-  try {
-    if (!tempmailHeadless) return { success: false, message: "No window available" };
-    return tempmailHeadless.toggleDebug();
-  } catch (error) {
-    return { success: false, message: error.message };
-  }
-});
-
-ipcMain.handle("tempmail-switch", async (event, email) => {
-  try {
-    if (!tempmailHeadless) tempmailHeadless = new TempmailScraper();
-    return await tempmailHeadless.switchToEmail(email);
-  } catch (error) {
-    return { success: false, message: error.message };
-  }
-});
-
-ipcMain.handle("tempmail-delete", async () => {
-  try {
-    if (!tempmailHeadless) return { success: false, message: "No active email" };
-    return await tempmailHeadless.deleteCurrentEmail();
-  } catch (error) {
-    return { success: false, message: error.message };
-  }
+process.on('unhandledRejection', (error) => {
+  logger.error('Unhandled rejection:', error);
 });
