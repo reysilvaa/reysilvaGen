@@ -70,7 +70,7 @@ jobs:
           echo "=== Build Output ==="
           dir dist
           echo "=== File Sizes ==="
-          for %f in (dist\*.exe) do echo %~nxf: %~zf bytes
+          Get-ChildItem dist\*.exe | ForEach-Object { Write-Host "$($_.Name): $($_.Length) bytes" }
 
   # ============================================
   # macOS Build
