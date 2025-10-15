@@ -51,6 +51,11 @@ function createSplashScreen() {
   splashWindow.loadFile(path.join(PATHS.renderer, 'splash.html'));
   splashWindow.center();
   
+  // Send version to splash when ready
+  splashWindow.webContents.once('dom-ready', () => {
+    splashWindow.webContents.send('splash-version', app.getVersion());
+  });
+  
   logger.info('Splash screen created');
 }
 
@@ -101,7 +106,7 @@ function createMainWindow() {
           autoUpdater = new AutoUpdaterManager(mainWindow);
           autoUpdater.checkForUpdatesAndNotify();
         }
-      }, 500);
+      }, 2000); // Increased from 500ms to 2000ms for version loading
     }, TIMING.SPLASH_DURATION - 500);
   });
 

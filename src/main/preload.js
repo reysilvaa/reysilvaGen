@@ -73,7 +73,8 @@ contextBridge.exposeInMainWorld("appConstants", {
   getConstants: () => ipcRenderer.invoke("get-app-constants"),
 });
 
-// Splash Screen API - For progress updates
+// Splash Screen API - For progress updates and version
 contextBridge.exposeInMainWorld("splashAPI", {
   onProgress: (callback) => ipcRenderer.on("splash-progress", (_, progress, status) => callback(progress, status)),
+  onVersion: (callback) => ipcRenderer.on("splash-version", (_, version) => callback(version)),
 });

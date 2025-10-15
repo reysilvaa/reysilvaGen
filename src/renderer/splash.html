@@ -390,7 +390,7 @@
       <!-- Footer -->
       <div class="footer">
         <div class="version">
-          <strong>Version 2.0.2</strong> • Developed by Reysilva
+          <strong><span id="app-version"></span></strong> • Developed by Reysilva
         </div>
       </div>
     </div>
@@ -399,5 +399,18 @@
     <script src="mvc/controllers/baseController.js"></script>
     <!-- Load SplashController -->
     <script src="mvc/controllers/splashController.js"></script>
+    
+    <!-- Version listener -->
+    <script>
+      // Listen for version from main process
+      if (window.splashAPI && window.splashAPI.onVersion) {
+        window.splashAPI.onVersion((version) => {
+          const versionElement = document.getElementById('app-version');
+          if (versionElement) {
+            versionElement.textContent = `Version ${version}`;
+          }
+        });
+      }
+    </script>
   </body>
 </html>
