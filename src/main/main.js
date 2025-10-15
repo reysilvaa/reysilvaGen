@@ -17,14 +17,15 @@ if (isDev) {
 }
 
 // Utilities
-const { wrapHandler, successResponse, errorResponse, lazyServiceHandler } = require('../utils/ipcHandler');
-const logger = require('../utils/logger');
+const { wrapHandler, lazyServiceHandler } = require('../core/utils/ipcHandler');
+const { createSuccessResponse, createErrorResponse } = require('../core/utils/validators');
+const logger = require('../core/utils/logger');
 
-// Modules
-const ConfigManager = require('../modules/configManager');
-const CursorResetManager = require('../modules/cursorResetManager');
+// Core modules
+const ConfigManager = require('../core/config/configManager');
+const CursorResetManager = require('../core/system/cursorResetManager');
 const TempmailScraper = require('../scrapers/tempmailScraper');
-const AutoUpdaterManager = require('../utils/autoUpdater');
+const AutoUpdaterManager = require('../core/system/autoUpdater');
 
 // Application state
 let mainWindow;
@@ -169,7 +170,7 @@ function getTempmailService() {
 function createGetterHandler(getterFn, dataKey = null) {
   return wrapHandler(async () => {
     const data = await getterFn();
-    return successResponse(dataKey ? { [dataKey]: data } : data);
+    return createSuccessResponse('Operation completed', dataKey ? { [dataKey]: data } : data);
   });
 }
 
@@ -179,7 +180,7 @@ function createGetterHandler(getterFn, dataKey = null) {
 function createConfigHandler(operation) {
   return wrapHandler(async (...args) => {
     const result = await operation(...args);
-    return result.success ? result : successResponse(result);
+    return result.success ? result : createSuccessResponse('Operation completed', result);
   });
 }
 
@@ -195,14 +196,14 @@ function createServiceHandler(serviceFn) {
 // Auto Updater Handlers
 ipcMain.handle('check-for-updates', wrapHandler(async () => {
   if (!autoUpdater) {
-    return errorResponse('Auto updater not initialized');
+    return createErrorResponse('Auto updater not initialized');
   }
   return await autoUpdater.checkForUpdates();
 }));
 
 ipcMain.handle('download-update', wrapHandler(async () => {
   if (!autoUpdater) {
-    return errorResponse('Auto updater not initialized');
+    return createErrorResponse('Auto updater not initialized');
   }
   return await autoUpdater.downloadUpdate();
 }));
@@ -217,7 +218,7 @@ ipcMain.handle('install-update', wrapHandler(() => {
 // Admin Panel Handler
 ipcMain.handle('open-admin-panel', createServiceHandler(async () => {
   createAdminWindow();
-  return successResponse();
+  return createSuccessResponse('Admin panel opened');
 }));
 
 // Admin Authentication Handlers  
@@ -231,7 +232,7 @@ ipcMain.handle('admin-verify-session', createConfigHandler((event, sessionToken)
 
 ipcMain.handle('admin-logout', createServiceHandler(async (event, sessionToken) => {
   config.logout(sessionToken);
-  return successResponse();
+  return createSuccessResponse('Admin logged out');
 }));
 
 // BIN Management Handlers - Using getter factory
@@ -242,7 +243,7 @@ ipcMain.handle('load-csv', wrapHandler(async (event, filename) => {
   const fs = require('fs');
   const csvPath = path.join(__dirname, '../../assets/address', filename);
   const csvData = fs.readFileSync(csvPath, 'utf-8');
-  return successResponse({ data: csvData });
+  return createSuccessResponse('CSV data loaded', { data: csvData });
 }));
 
 // Constants Handler - Expose constants to renderer (no dependencies)
@@ -267,10 +268,10 @@ ipcMain.handle('get-app-constants', wrapHandler(async () => {
       CARD_TYPES: constants.CARD_TYPES,
     };
     console.log('✅ Constants loaded successfully for renderer');
-    return successResponse(safeConstants);
+    return createSuccessResponse('Constants loaded', safeConstants);
   } catch (error) {
     console.error('❌ Failed to load constants:', error);
-    return errorResponse('Failed to load constants', { error: error.message });
+    return createErrorResponse('Failed to load constants', error, { error: error.message });
   }
 }));
 
@@ -294,7 +295,7 @@ ipcMain.handle('get-setting', createGetterHandler((event, key) => config.getSett
 
 ipcMain.handle('set-setting', createServiceHandler(async (event, { key, value }) => {
   config.setSetting(key, value);
-  return successResponse();
+  return createSuccessResponse('Setting updated');
 }));
 
 // Config Management Handlers - Using getter factory
@@ -303,7 +304,7 @@ ipcMain.handle('get-app-version', createGetterHandler(() => app.getVersion(), 'v
 
 ipcMain.handle('reset-config', createServiceHandler(async () => {
   config.resetToDefault();
-  return successResponse();
+  return createSuccessResponse('Config reset to default');
 }));
 
 // Cursor Reset Handlers - Factory for cursor operations
@@ -318,14 +319,14 @@ ipcMain.handle('cursor-reset-machine-id', createCursorHandler(manager => manager
 
 ipcMain.handle('cursor-close', createCursorHandler(async manager => {
   const success = await manager.killCursor();
-  return successResponse({
-    success,
-    message: success ? 'Cursor berhasil ditutup' : 'Cursor tidak sedang berjalan'
-  });
+  return createSuccessResponse(
+    success ? 'Cursor berhasil ditutup' : 'Cursor tidak sedang berjalan',
+    { success }
+  );
 }));
 
 ipcMain.handle('cursor-check-status', createCursorHandler(async manager => 
-  successResponse({ isRunning: await manager.isCursorRunning() })
+  createSuccessResponse('Status checked', { isRunning: await manager.isCursorRunning() })
 ));
 
 // Tempmail Handlers - CRUD Methods
@@ -354,7 +355,7 @@ ipcMain.handle('tempmail-clear', createServiceHandler(async () => {
     await tempmailHeadless.clear();
     tempmailHeadless = null;
   }
-  return successResponse();
+  return createSuccessResponse('Tempmail services closed');
 }));
 
 

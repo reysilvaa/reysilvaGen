@@ -23,6 +23,9 @@ class TempmailController extends BaseController {
     
     // Service
     this.tempmailService = new TempmailService();
+    
+    // Prevent multiple modal opens
+    this.currentlyOpeningEmail = null;
   }
 
   async onInit() {
@@ -224,17 +227,22 @@ class TempmailController extends BaseController {
     try {
       const result = await this.tempmailService.getInbox();
       
+      // Handle the correct data structure from createSuccessResponse (emails spread into result)
       if (result.success && result.emails && result.emails.length > 0) {
-        this.updateState({ inbox: result.emails });
-        this.renderInbox(result.emails);
-        this.elements['inbox-count-badge'].textContent = result.emails.length.toString();
+        const emails = result.emails;
+        this.updateState({ inbox: emails });
+        this.renderInbox(emails);
+        this.elements['inbox-count-badge'].textContent = emails.length.toString();
         
-        if (!silent) this.showSuccess(`Found ${result.emails.length} email(s)!`);
+        if (!silent) this.showSuccess(`Found ${emails.length} email(s)!`);
+        this.log('info', `📬 Loaded ${emails.length} emails successfully`);
       } else if (result.success) {
         this.updateState({ inbox: [] });
         this.renderEmptyInbox();
         if (!silent) this.showSuccess("Inbox checked - no new emails");
+        this.log('info', '📭 Inbox is empty');
     } else {
+        this.log('error', 'Inbox check failed:', result);
         this.handleInboxError(result, silent);
       }
     } catch (error) {
@@ -317,7 +325,14 @@ class TempmailController extends BaseController {
   }
 
   handleHideEmailModal() {
-    this.elements['email-detail-modal'].style.display = "none";
+    const modal = this.elements['email-detail-modal'];
+    if (modal) {
+      modal.style.display = "none";
+      modal.style.opacity = "0";
+      modal.style.visibility = "hidden";
+      modal.classList.remove('modal--active');
+    }
+    this.currentlyOpeningEmail = null;
   }
 
   handleToggleDomainDropdown(e) {
@@ -402,8 +417,38 @@ class TempmailController extends BaseController {
     this.elements['tempmail-inbox'].innerHTML = emailsHTML;
 
     // Add click handlers for email items
-    this.elements['tempmail-inbox'].querySelectorAll(".email-item").forEach(item => {
-      this.addEventListener(item, 'click', () => this.showEmailDetail(item.dataset.id));
+    const emailItems = this.elements['tempmail-inbox'].querySelectorAll(".email-item");
+    
+    emailItems.forEach((item, index) => {
+      const emailId = item.dataset.id;
+      
+      if (emailId && emailId.trim() !== '') {
+        // Remove any existing click handlers to prevent multiple events
+        item.replaceWith(item.cloneNode(true));
+        const freshItem = this.elements['tempmail-inbox'].querySelectorAll(".email-item")[index];
+        
+        this.addEventListener(freshItem, 'click', (event) => {
+          event.preventDefault();
+          event.stopPropagation();
+          this.log('info', `📧 Opening email: ${emailId}`);
+          this.showEmailDetail(emailId);
+        });
+        
+        // Add hover effects
+        this.addEventListener(freshItem, 'mouseenter', () => {
+          if (!freshItem.style.borderLeft.includes('3px solid #667eea')) {
+            freshItem.style.background = 'var(--bg-secondary)';
+          }
+        });
+        
+        this.addEventListener(freshItem, 'mouseleave', () => {
+          if (!freshItem.style.borderLeft.includes('3px solid #667eea')) {
+            freshItem.style.background = 'transparent';
+          } else {
+            freshItem.style.background = 'rgba(102, 126, 234, 0.03)';
+          }
+        });
+      }
     });
   }
 
@@ -417,9 +462,7 @@ class TempmailController extends BaseController {
     
     return `
       <div class="email-item ${read ? 'read' : 'unread'}" data-id="${id}" 
-           style="padding: 16px; border-bottom: 1px solid var(--border-color); cursor: pointer; transition: all 0.2s; ${hasOTP ? 'border-left: 3px solid #667eea; background: rgba(102, 126, 234, 0.03);' : ''}"
-           onmouseover="this.style.background='var(--bg-secondary)'" 
-           onmouseout="this.style.background='${hasOTP ? 'rgba(102, 126, 234, 0.03)' : 'transparent'}'">
+           style="padding: 16px; border-bottom: 1px solid var(--border-color); cursor: pointer; transition: all 0.2s; ${hasOTP ? 'border-left: 3px solid #667eea; background: rgba(102, 126, 234, 0.03);' : ''}">
         
         <div style="display: flex; justify-content: space-between; margin-bottom: 8px;">
           <div style="flex: 1; min-width: 0;">
@@ -561,11 +604,31 @@ class TempmailController extends BaseController {
   }
 
   async showEmailDetail(emailId) {
+    // Prevent multiple simultaneous requests for the same email
+    if (this.currentlyOpeningEmail === emailId) {
+      this.log('warn', `Already opening email ${emailId}, skipping...`);
+      return;
+    }
+    
+    this.currentlyOpeningEmail = emailId;
+    this.log('info', `📖 Opening email detail: ${emailId}`);
+    
     const modal = this.elements['email-detail-modal'];
     const subjectEl = this.elements['email-detail-subject'];
     const bodyEl = this.elements['email-detail-body'];
 
+    if (!modal || !subjectEl || !bodyEl) {
+      this.log('error', 'Email detail modal elements not found');
+      this.utils.showError('Email modal not available');
+      this.currentlyOpeningEmail = null;
+      return;
+    }
+
     modal.style.display = "flex";
+    modal.style.opacity = "1";
+    modal.style.visibility = "visible";
+    modal.style.zIndex = "100000";
+    modal.classList.add('modal--active');
     bodyEl.innerHTML = '<p class="placeholder">Loading email...</p>';
 
     try {
@@ -580,16 +643,17 @@ class TempmailController extends BaseController {
             <div style="margin-bottom: 8px;"><strong>From:</strong> ${email.from || email.sender || "Unknown"}</div>
             <div style="margin-bottom: 8px;"><strong>Date:</strong> ${email.date || email.time || "Unknown"}</div>
             ${email.to ? `<div style="margin-bottom: 8px;"><strong>To:</strong> ${email.to}</div>` : ''}
-            ${email.otp ? `<div style="margin-top: 12px; padding: 16px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); border-radius: 8px; text-align: center;">
-              <div style="color: rgba(255,255,255,0.9); font-size: 12px; margin-bottom: 8px; font-weight: 600; text-transform: uppercase; letter-spacing: 1px; display: flex; align-items: center; justify-content: center; gap: 6px;">
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor" stroke="none">
+            ${email.otp ? `<div style="margin-top: 12px; padding: 20px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); border-radius: 12px; text-align: center; box-shadow: 0 8px 32px rgba(102, 126, 234, 0.4);">
+              <div style="color: rgba(255,255,255,0.9); font-size: 12px; margin-bottom: 12px; font-weight: 600; text-transform: uppercase; letter-spacing: 1px; display: flex; align-items: center; justify-content: center; gap: 6px;">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" stroke="none">
                   <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/>
                   <circle cx="12" cy="16" r="1"/>
                   <path d="M7 11V7a5 5 0 0 1 10 0v4"/>
                 </svg>
                 OTP CODE
               </div>
-              <div style="font-size: 28px; font-weight: 700; color: white; font-family: var(--font-mono); letter-spacing: 4px; user-select: all;">${email.otp}</div>
+              <div style="font-size: 32px; font-weight: 700; color: white; font-family: var(--font-mono); letter-spacing: 6px; user-select: all; text-shadow: 0 2px 4px rgba(0,0,0,0.3); padding: 8px; background: rgba(255,255,255,0.1); border-radius: 8px; margin-bottom: 12px;">${email.otp}</div>
+              <button onclick="navigator.clipboard.writeText('${email.otp}').then(() => alert('OTP copied to clipboard!'))" style="background: rgba(255,255,255,0.2); border: 1px solid rgba(255,255,255,0.3); color: white; padding: 8px 16px; border-radius: 6px; cursor: pointer; font-size: 12px; font-weight: 500; transition: all 0.2s;" onmouseover="this.style.background='rgba(255,255,255,0.3)'" onmouseout="this.style.background='rgba(255,255,255,0.2)'">📋 Copy OTP</button>
             </div>` : ''}
           </div>
           <div style="line-height: 1.6; color: var(--text-primary); max-height: 400px; overflow-y: auto;">
@@ -598,11 +662,15 @@ class TempmailController extends BaseController {
         `;
         
         bodyEl.innerHTML = bodyHtml;
+        this.log('success', `✅ Email ${emailId} loaded successfully`);
       } else {
         bodyEl.innerHTML = '<p style="color: var(--danger);">Failed to load email content</p>';
       }
     } catch (error) {
+      this.log('error', 'Error loading email detail:', error);
       bodyEl.innerHTML = `<p style="color: var(--danger);">Error: ${error.message}</p>`;
+    } finally {
+      this.currentlyOpeningEmail = null;
     }
   }
 

@@ -4,7 +4,7 @@
  * 
  * Main Methods:
  * - create(params) - Generate new email
- * - show(params) - Get current/existing/available emails  
+ * - show(params) - Get current/existing/available emails
  * - delete(params) - Delete current or specific email
  * - execute(params) - Execute various operations
  * 
@@ -12,9 +12,9 @@
  */
 
 const { WEB, TIMING } = require('../config/appConstants');
-const ChromeLauncher = require('../modules/chromeLauncher');
-const { createErrorResponse, createSuccessResponse } = require('../utils/validators');
-const logger = require('../utils/logger')('Tempmail');
+const ChromeLauncher = require('../core/browser/chromeLauncher');
+const { createErrorResponse, createSuccessResponse } = require('../core/utils/validators');
+const logger = require('../core/utils/logger')('Tempmail');
 
 class TempmailScraper {
   constructor() {
@@ -39,7 +39,7 @@ class TempmailScraper {
         return createSuccessResponse('Already initialized');
       }
 
-      // Step 1: Launch Chrome browser
+      // Step 1: Launch Chrome browser with simplified API
       const launchResult = await this.chromeLauncher.launch();
       if (!launchResult.success) {
         return launchResult;
@@ -50,9 +50,9 @@ class TempmailScraper {
 
       // Step 2: Navigate to tempmail
       logger.info('🧭 Navigating to tempmail.ac.id...');
-      await this.page.goto(WEB.TEMPMAIL_URL, { 
+      await this.page.goto(WEB.TEMPMAIL_URL, {
         waitUntil: 'domcontentloaded',
-        timeout: WEB.CONNECTION_TIMEOUT 
+        timeout: WEB.CONNECTION_TIMEOUT
       });
       
       // Step 3: Set ready state
@@ -112,8 +112,18 @@ class TempmailScraper {
    */
   async performAction(action, params = {}, retryCount = 0) {
     try {
-      if (!this.isReady) {
-        throw new Error('Browser not initialized');
+      // Check if browser session is valid
+      if (!this.isSessionValid()) {
+        logger.warn('Invalid browser session, attempting to recover...');
+        const initResult = await this.initialize();
+        if (!initResult.success) {
+          throw new Error('Failed to recover browser session');
+        }
+      }
+
+      // Double-check page is available
+      if (!this.page || this.page.isClosed()) {
+        throw new Error('Browser page is not available');
       }
 
       return await this.page.evaluate((action, params) => {
@@ -191,29 +201,126 @@ class TempmailScraper {
 
           case 'getInboxEmails':
             const inboxEmails = [];
-            const messagesContainer = document.querySelector('.messages.flex.flex-col-reverse.justify-end.min-h-tm-groot-messages');
-            if (messagesContainer) {
-              const emailItems = messagesContainer.querySelectorAll('div[data-id].flex.items-center.gap-3');
-              emailItems.forEach(item => {
-                const emailId = item.getAttribute('data-id');
-                const senderDiv = item.querySelector('.w-1\\/2.md\\:w-3\\/12');
-                const subjectDiv = item.querySelector('.w-1\\/2.md\\:w-8\\/12');
+            
+            // Look for email messages in the main container
+            const emailMessages = document.querySelectorAll('div[id^="message-"].message.min-h-tm-groot-messages');
+            
+            emailMessages.forEach(messageDiv => {
+              // Extract ID from the message div (format: message-12345)
+              const emailId = messageDiv.id.replace('message-', '');
+              
+              if (emailId) {
+                // Extract sender info from the message header
+                let sender = 'Unknown';
+                let subject = 'No Subject';
+                let date = 'Just now';
                 
-                if (emailId) {
-                  inboxEmails.push({
-                    id: emailId,
-                    sender: senderDiv?.textContent?.trim() || 'Unknown',
-                    subject: subjectDiv?.textContent?.trim() || 'No Subject'
-                  });
+                // Look for sender and date in the flex container
+                const headerDiv = messageDiv.querySelector('.flex.justify-between.items-center.py-4.px-7');
+                if (headerDiv) {
+                  const senderDiv = headerDiv.querySelector('div:first-child');
+                  if (senderDiv) {
+                    const senderText = senderDiv.textContent.trim().split('\n')[0];
+                    sender = senderText || 'Unknown';
+                    
+                    const emailDiv = senderDiv.querySelector('.text-xs.overflow-ellipsis');
+                    if (emailDiv) {
+                      sender = `${senderText} <${emailDiv.textContent.trim()}>`;
+                    }
+                  }
+                  
+                  const dateDiv = headerDiv.querySelector('div:last-child .text-xs.overflow-ellipsis');
+                  if (dateDiv) {
+                    date = dateDiv.textContent.trim();
+                  }
                 }
-              });
-            }
+                
+                // Extract subject from the subject line div
+                const subjectDiv = messageDiv.querySelector('.border-t.border-b.border-dashed.py-4.px-7');
+                if (subjectDiv) {
+                  subject = subjectDiv.textContent.trim();
+                }
+                
+                // Check for OTP in the email content
+                const textarea = messageDiv.querySelector('textarea.hidden');
+                let hasOTP = false;
+                let otpCode = null;
+                
+                if (textarea) {
+                  const emailContent = textarea.value || textarea.textContent;
+                  
+                  // Enhanced OTP detection patterns
+                  const otpPatterns = [
+                    /(?:one-time\s+code\s+is)[:\s]*(\d{4,8})/gi,
+                    /(?:code\s+is)[:\s]*(\d{4,8})/gi,
+                    /(?:otp\s+is)[:\s]*(\d{4,8})/gi,
+                    /(?:verification\s+code)[:\s]*(\d{4,8})/gi,
+                    /(?:your\s+code)[:\s]*(\d{4,8})/gi,
+                    /(?:access\s+code)[:\s]*(\d{4,8})/gi
+                  ];
+                  
+                  let foundOTP = null;
+                  for (const pattern of otpPatterns) {
+                    const match = emailContent.match(pattern);
+                    if (match && match[1]) {
+                      foundOTP = match[1];
+                      hasOTP = true;
+                      otpCode = foundOTP;
+                      break;
+                    }
+                  }
+                  
+                  // Fallback: look for standalone 6-digit numbers (common OTP length)
+                  if (!hasOTP) {
+                    const sixDigitMatch = emailContent.match(/\b(\d{6})\b/g);
+                    if (sixDigitMatch && sixDigitMatch.length === 1) {
+                      hasOTP = true;
+                      otpCode = sixDigitMatch[0];
+                    }
+                  }
+                }
+                
+                const emailData = {
+                  id: emailId,
+                  sender: sender,
+                  subject: subject,
+                  date: date,
+                  time: date,
+                  from: sender,
+                  preview: hasOTP ? `🔐 OTP Code: ${otpCode}` : subject,
+                  read: false, // Assume unread by default
+                  otp: hasOTP ? otpCode : null
+                };
+                
+                inboxEmails.push(emailData);
+              }
+            });
+            
             return inboxEmails;
 
           case 'clickEmail':
-            const emailItem = document.querySelector(`[data-id="${params.emailId}"]`);
+            // Try to find the email by message ID first
+            let emailItem = document.getElementById(`message-${params.emailId}`);
+            
+            // Fallback: try to find by data-id attribute (older structure)
+            if (!emailItem) {
+              emailItem = document.querySelector(`[data-id="${params.emailId}"]`);
+            }
+            
             if (emailItem) {
+              // For the message div structure, we need to click on it or scroll it into view
+              emailItem.scrollIntoView({ behavior: 'smooth', block: 'center' });
+              
+              // Give it a moment to scroll, then ensure it's visible
+              setTimeout(() => {
+                const showAttribute = emailItem.getAttribute('x-show');
+                if (showAttribute) {
+                  // This uses Alpine.js x-show, so we need to trigger the visibility
+                  emailItem.style.display = 'block';
+                }
               emailItem.click();
+              }, 300);
+              
               return { success: true };
             }
             return { success: false, error: 'Email not found' };
@@ -243,25 +350,48 @@ class TempmailScraper {
     } catch (error) {
       logger.error(`Action ${action} failed:`, error);
       
-      // Try to recover from context destroyed errors (max 2 retries)
-      if (retryCount < 2 && (error.message.includes('Execution context was destroyed') || 
-          error.message.includes('Protocol error') ||
-          error.message.includes('Target closed'))) {
+      // Try to recover from browser connection errors (max 2 retries)
+      if (retryCount < 2 && this.isRecoverableError(error.message)) {
         
-        logger.info(`Attempting to recover from context error (attempt ${retryCount + 1}/2)...`);
+        logger.info(`🔄 [Tempmail] Attempting to recover from browser error (attempt ${retryCount + 1}/2)...`);
         
-        // Reset state and cleanup for re-initialization
+        // For minor errors, try lighter recovery first
+        if (retryCount === 0 && (error.message.includes('Execution context was destroyed') || 
+            error.message.includes('Protocol error'))) {
+          
+          logger.info('Attempting light recovery (page refresh)...');
+          try {
+            if (this.page && !this.page.isClosed()) {
+              await this.page.reload({ waitUntil: 'domcontentloaded' });
+              await this.wait(1000);
+              return await this.performAction(action, params, retryCount + 1);
+            }
+          } catch (lightRecoveryError) {
+            logger.warn('Light recovery failed, proceeding to full recovery:', lightRecoveryError.message);
+          }
+        }
+        
+        // Full recovery for persistent errors
+        logger.info('Performing full browser recovery...');
         this.isReady = false;
-        await this.chromeLauncher.cleanup(this.page, null, false, this.instanceId);
-        this.page = null;
         
-        // Wait a bit before retrying
-        await this.wait(1000);
+        try {
+          // Reset state and cleanup via ChromeLauncher
+          this.isReady = false;
+          await this.chromeLauncher.cleanup();
+          this.browser = null;
+          this.page = null;
+        } catch (cleanupError) {
+          logger.warn('Cleanup error (continuing):', cleanupError.message);
+        }
         
-        // Force re-initialization
+        // Wait before retrying
+        await this.wait(Math.min(2000 * (retryCount + 1), 5000));
+        
+        // Force full re-initialization
         const initResult = await this.initialize();
         if (initResult.success) {
-          logger.info('Recovery successful, retrying action...');
+          logger.success('🔄 Browser recovered successfully, retrying action...');
           return await this.performAction(action, params, retryCount + 1);
             } else {
           logger.error('Recovery failed:', initResult.message);
@@ -277,7 +407,7 @@ class TempmailScraper {
    * @returns {boolean} True if session is valid
    */
   isSessionValid() {
-    return this.isReady && this.browser && this.page && !this.page.isClosed();
+    return this.isReady && this.chromeLauncher.isReady();
   }
 
   // ==================== HELPER METHODS ====================
@@ -309,7 +439,7 @@ class TempmailScraper {
     try {
       const { type = 'random', username, domain, customEmail } = params;
       logger.info(`Creating ${type} email...`);
-
+      
       // Ensure session is ready
       const readyCheck = await this.ensureReady();
       if (readyCheck) return readyCheck;
@@ -329,7 +459,7 @@ class TempmailScraper {
           return createErrorResponse('Username and domain required for custom email');
         }
       }
-
+      
       // Execute generation
       const action = type === 'random' ? 'generateRandom' : 'generateCustom';
       const result = await this.performAction(action, actionParams);
@@ -366,7 +496,7 @@ class TempmailScraper {
     try {
       const { action = 'current' } = params;
       logger.info(`Showing ${action} email(s)...`);
-
+      
       // Ensure session is ready
       const readyCheck = await this.ensureReady();
       if (readyCheck) return readyCheck;
@@ -472,7 +602,7 @@ class TempmailScraper {
     try {
       const { action, ...data } = params;
       logger.info(`Executing action: ${action}`);
-
+      
       // Ensure session is ready (except for clear action)
       if (action !== 'clear') {
         const readyCheck = await this.ensureReady();
@@ -490,8 +620,28 @@ class TempmailScraper {
         case 'inbox':
           try {
             logger.info(`Checking inbox for: ${this.currentEmail}`);
+            
+            // Gentle refresh instead of full page reload
+            try {
+              const refreshResult = await this.performAction('refreshInbox');
+              if (refreshResult.success) {
+                await this.wait(1000);
+              } else {
+                // Fallback: gentle page refresh
+                if (this.page && !this.page.isClosed()) {
+                  await this.page.evaluate(() => window.location.reload());
+                  await this.wait(2000);
+                }
+              }
+            } catch (refreshError) {
+              logger.warn('Refresh failed, trying alternative approach:', refreshError.message);
+              
+              // Only reload if page is actually available
+              if (this.page && !this.page.isClosed()) {
             await this.page.reload({ waitUntil: 'domcontentloaded' });
             await this.wait(1000);
+              }
+            }
 
             const emails = await this.performAction('getInboxEmails');
             logger.success(`Inbox checked: ${emails.length} email(s) found`);
@@ -520,17 +670,41 @@ class TempmailScraper {
             const result = await this.page.evaluate((emailId) => {
               const messageDiv = document.getElementById(`message-${emailId}`);
               if (!messageDiv) {
-                return createErrorResponse('Email content not loaded');
+                return { success: false, error: 'Email content not loaded' };
               }
 
               let subject = 'No Subject';
+              let sender = 'Unknown';
+              let date = 'Unknown';
               let body = '';
 
+              // Extract subject from the subject line div
               const subjectDiv = messageDiv.querySelector('.border-t.border-b.border-dashed.py-4.px-7');
               if (subjectDiv) {
                 subject = subjectDiv.textContent.trim();
               }
 
+              // Extract sender and date from header
+              const headerDiv = messageDiv.querySelector('.flex.justify-between.items-center.py-4.px-7');
+              if (headerDiv) {
+                const senderDiv = headerDiv.querySelector('div:first-child');
+                if (senderDiv) {
+                  const senderText = senderDiv.textContent.trim().split('\n')[0];
+                  sender = senderText || 'Unknown';
+                  
+                  const emailDiv = senderDiv.querySelector('.text-xs.overflow-ellipsis');
+                  if (emailDiv) {
+                    sender = `${senderText} <${emailDiv.textContent.trim()}>`;
+                  }
+                }
+                
+                const dateDiv = headerDiv.querySelector('div:last-child .text-xs.overflow-ellipsis');
+                if (dateDiv) {
+                  date = dateDiv.textContent.trim();
+                }
+              }
+
+              // Extract body from iframe
               const iframe = messageDiv.querySelector('iframe.w-full.flex.flex-grow.min-h-tm-groot-iframe');
               if (iframe) {
                 const srcdoc = iframe.getAttribute('srcdoc');
@@ -540,8 +714,56 @@ class TempmailScraper {
                 }
               }
 
+              // Fallback: try to extract from textarea
+              if (!body) {
+                const textarea = messageDiv.querySelector('textarea.hidden');
+                if (textarea) {
+                  const rawContent = textarea.value || textarea.textContent;
+                  if (rawContent) {
+                    // Extract the HTML content part
+                    const htmlMatch = rawContent.match(/Content-Type:\s*text\/html(.+)/s);
+                    if (htmlMatch) {
+                      body = htmlMatch[1].trim();
+                      // Decode HTML entities
+                      body = body.replace(/&lt;/g, '<').replace(/&gt;/g, '>').replace(/&quot;/g, '"')
+                                 .replace(/&amp;#x27;/g, "'").replace(/&amp;/g, '&');
+                    } else {
+                      // Use raw content as fallback
+                      body = `<pre style="white-space: pre-wrap; font-family: monospace;">${rawContent}</pre>`;
+                    }
+                  }
+                }
+              }
+
               if (!body) {
                 body = '<div style="padding: 20px; text-align: center; color: #666;">Email content not available</div>';
+              }
+
+              // Enhanced OTP detection for email detail
+              let otp = null;
+              const otpPatterns = [
+                /(?:one-time\s+code\s+is)[:\s]*(\d{4,8})/gi,
+                /(?:code\s+is)[:\s]*(\d{4,8})/gi,
+                /(?:otp\s+is)[:\s]*(\d{4,8})/gi,
+                /(?:verification\s+code)[:\s]*(\d{4,8})/gi,
+                /(?:your\s+code)[:\s]*(\d{4,8})/gi,
+                /(?:access\s+code)[:\s]*(\d{4,8})/gi
+              ];
+              
+              for (const pattern of otpPatterns) {
+                const match = body.match(pattern);
+                if (match && match[1]) {
+                  otp = match[1];
+                  break;
+                }
+              }
+              
+              // Fallback: look for standalone 6-digit numbers
+              if (!otp) {
+                const sixDigitMatch = body.match(/\b(\d{6})\b/g);
+                if (sixDigitMatch && sixDigitMatch.length === 1) {
+                  otp = sixDigitMatch[0];
+                }
               }
 
               return {
@@ -549,16 +771,21 @@ class TempmailScraper {
                 email: {
                   id: emailId,
                   subject: subject,
+                  sender: sender,
+                  from: sender,
+                  date: date,
+                  time: date,
                   body: body,
                   html: body,
-                  text: body.replace(/<[^>]*>/g, '').substring(0, 500)
+                  text: body.replace(/<[^>]*>/g, '').substring(0, 500),
+                  otp: otp
                 }
               };
             }, data.emailId);
 
             logger.success(`Email read successfully: ${data.emailId}`);
             return result;
-          } catch (error) {
+    } catch (error) {
             logger.error('Read email error:', error);
             return createErrorResponse('Read email failed', error);
           }
@@ -608,7 +835,7 @@ class TempmailScraper {
               }
 
             return createErrorResponse('Both switch methods failed');
-          } catch (error) {
+    } catch (error) {
             logger.error('Switch email error:', error);
             return createErrorResponse('Switch email failed', error);
           }
@@ -629,7 +856,7 @@ class TempmailScraper {
               logger.success('Inbox refreshed via page reload');
               return createSuccessResponse('Inbox refreshed via page reload');
             }
-          } catch (error) {
+    } catch (error) {
             logger.error('Refresh error:', error);
             return createErrorResponse('Refresh failed', error);
           }
@@ -641,7 +868,7 @@ class TempmailScraper {
           } catch (error) {
             logger.error('Clear session error:', error);
             return createErrorResponse('Clear session failed', error);
-          }
+      }
 
         default:
           return createErrorResponse(`Unknown action: ${action}`);
@@ -655,37 +882,24 @@ class TempmailScraper {
   // ==================== UTILITY METHODS ====================
 
   /**
-   * Clean up session resources
-   * Delegates to ChromeLauncher for browser management
-   * @param {boolean} forceCloseBrowser - Force close the browser
+   * Clean up scraper session - delegates browser cleanup to ChromeLauncher
    */
-  async cleanup(forceCloseBrowser = false) {
-    try {
-      // Step 1: Reset scraper state
-      this.currentEmail = null;
-      this.isReady = false;
-
-      // Step 2: Use ChromeLauncher for complete cleanup
-      const cleanupResult = await this.chromeLauncher.cleanup(
-        this.page, 
-        this.browser, 
-        forceCloseBrowser, 
-        this.instanceId
-      );
-
-      // Step 3: Reset local references
-      this.page = null;
-      this.browser = null;
-
-      logger.info(`🧹 Scraper session cleaned up for instance ${this.instanceId}`);
-      return cleanupResult;
-
-    } catch (error) {
-      if (!error.message.includes('Protocol error') && !error.message.includes('Target closed')) {
-        logger.error(`Scraper cleanup error for ${this.instanceId}:`, error);
-      }
-      return createErrorResponse('Cleanup failed', error);
-    }
+  async cleanup() {
+    logger.info(`🧹 Cleaning up scraper session: ${this.instanceId}`);
+    
+    // Reset scraper state
+    this.currentEmail = null;
+    this.isReady = false;
+    
+    // Let ChromeLauncher handle browser cleanup
+    const result = await this.chromeLauncher.cleanup();
+    
+    // Clear references
+    this.page = null;
+    this.browser = null;
+    
+    logger.success(`✅ Scraper cleanup completed: ${this.instanceId}`);
+    return result;
   }
 
   /**

@@ -4,9 +4,9 @@
    ======================================== */
 
 /* ===== 1. CORE FOUNDATION ===== */
-@import 'core/variables.css';
-@import 'core/base.css';
-@import 'core/animations.css';
+@import '../../../core/ui/variables.css';
+@import '../../../core/ui/base.css';
+@import '../../../core/ui/animations.css';
 
 /* ===== 2. LAYOUT SYSTEM ===== */
 @import 'layout/layout.css';

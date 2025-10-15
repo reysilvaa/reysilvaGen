@@ -1,8 +1,10 @@
 /**
  * IPC Handler Utility
- * Provides consistent error handling and response formatting for IPC handlers
+ * Provides consistent error handling for IPC handlers
  * @module utils/ipc-handler
  */
+
+const { createErrorResponse } = require('./validators');
 
 /**
  * Wraps an IPC handler function with standardized error handling
@@ -22,42 +24,15 @@ function wrapHandler(handler, options = {}) {
       if (logErrors) {
         console.error(`❌ IPC Handler Error:`, error);
       }
-      return {
-        success: false,
-        message: error.message || 'An unexpected error occurred',
-        error: error.name
-      };
+      return createErrorResponse(
+        error.message || 'An unexpected error occurred',
+        error,
+        { error: error.name }
+      );
     }
   };
 }
 
-/**
- * Creates a success response
- * @param {*} data - Data to include in response
- * @param {string} message - Optional success message
- * @returns {Object} Success response object
- */
-function successResponse(data = {}, message = null) {
-  const response = { success: true, ...data };
-  if (message) {
-    response.message = message;
-  }
-  return response;
-}
-
-/**
- * Creates an error response
- * @param {string} message - Error message
- * @param {*} additionalData - Additional data to include
- * @returns {Object} Error response object
- */
-function errorResponse(message, additionalData = {}) {
-  return {
-    success: false,
-    message,
-    ...additionalData
-  };
-}
 
 /**
  * Validates required parameters
@@ -84,7 +59,7 @@ function lazyServiceHandler(serviceGetter, handler, errorMessage = 'Service not 
   return async (...args) => {
     const service = await serviceGetter();
     if (!service) {
-      return errorResponse(errorMessage);
+      return createErrorResponse(errorMessage);
     }
     return handler(service, ...args);
   };
@@ -92,8 +67,6 @@ function lazyServiceHandler(serviceGetter, handler, errorMessage = 'Service not 
 
 module.exports = {
   wrapHandler,
-  successResponse,
-  errorResponse,
   validateParams,
   lazyServiceHandler
 };

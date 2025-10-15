@@ -5,8 +5,8 @@
  */
 
 const { autoUpdater } = require('electron-updater');
-const { TIMING } = require('../config/appConstants');
-const logger = require('./logger').default.child('AutoUpdater');
+const { TIMING } = require('../../config/appConstants');
+const logger = require('../utils/logger').default.child('AutoUpdater');
 
 class AutoUpdaterManager {
   constructor(mainWindow) {

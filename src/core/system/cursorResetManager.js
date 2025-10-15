@@ -10,7 +10,7 @@ const os = require('os');
 const crypto = require('crypto');
 const { exec } = require('child_process');
 const { promisify } = require('util');
-const { TIMING, LOG } = require('../config/appConstants');
+const { TIMING, LOG } = require('../../config/appConstants');
 const { Logger } = require('../utils/logger');
 
 const execAsync = promisify(exec);

@@ -7,7 +7,7 @@
 const crypto = require('crypto');
 const path = require('path');
 const fs = require('fs');
-const { FILES, SESSION, CRYPTO } = require('../config/appConstants');
+const { FILES, SESSION, CRYPTO } = require('../../config/appConstants');
 const logger = require('../utils/logger').default.child('ConfigManager');
 
 class ConfigManager {

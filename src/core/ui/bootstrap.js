@@ -31,8 +31,8 @@
     getMainScripts() {
       return [
         // Core utilities first
-        "core/utils.js",
-        "core/dialog.js",
+        "../core/ui/dom.js",
+        "../core/ui/dialog.js",
         
         // Base classes (load order matters!)
         "mvc/models/BaseModel.js",
@@ -64,18 +64,18 @@
         "mvc/controllers/tempmailController.js",
         
         // CSV loader
-        "../modules/csvLoader.js",
+        "../core/data/csvLoader.js",
         
         // App initialization (last!)
-        "core/appInit.js"
+        "../core/ui/appInit.js"
       ];
     },
 
     // Admin scripts
     getAdminScripts() {
       return [
-        "core/utils.js",
-        "core/dialog.js",
+        "../core/ui/dom.js",
+        "../core/ui/dialog.js",
         "components/shared/admin-login.js",
         "components/shared/admin-sidebar.js",
         "components/shared/bins-section.js",
