@@ -48,6 +48,25 @@ const Utils = {
     setTimeout(() => div.remove(), 4000);
   },
 
+  showInfo(message) {
+    const div = document.createElement("div");
+    div.className = "info-message";
+    div.innerHTML = `
+      <span>
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="vertical-align: middle;">
+          <circle cx="12" cy="12" r="10"/>
+          <path d="M12 16v-4"/>
+          <path d="M12 8h.01"/>
+        </svg>
+      </span>
+      <span>${message}</span>
+    `;
+    div.style.cssText =
+      "position:fixed;top:20px;right:20px;z-index:10001;animation:slideIn 0.3s ease";
+    document.body.appendChild(div);
+    setTimeout(() => div.remove(), 3500);
+  },
+
   formatCards(cards, format) {
     switch (format) {
       case "plain":

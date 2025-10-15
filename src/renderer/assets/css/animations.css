@@ -183,7 +183,8 @@
 
 /* Message animations */
 .success-message,
-.error-message {
+.error-message,
+.info-message {
   animation: slideDown var(--transition-slow) ease;
 }
 

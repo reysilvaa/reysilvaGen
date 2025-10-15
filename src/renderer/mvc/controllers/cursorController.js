@@ -160,7 +160,7 @@ class CursorController extends BaseController {
   }
 
   displayNewIds(newIds) {
-    // Update ID display elements
+    // Update ID display elements (matches Python script output)
     if (this.elements['new-device-id']) {
       this.elements['new-device-id'].textContent = newIds.devDeviceId || "-";
     }
@@ -179,14 +179,26 @@ class CursorController extends BaseController {
   }
 }
 
-// Initialize controller
+// Initialize controller (singleton pattern to prevent duplicates)
 async function initCursorTab() {
   try {
+    // Prevent multiple initialization
+    if (window.cursorController && !window.cursorController.isDestroyed) {
+      console.log('ℹ️ Cursor controller already initialized, skipping...');
+      return;
+    }
+
+    // Cleanup existing controller if any
+    if (window.cursorController) {
+      window.cursorController.destroy();
+    }
+
     const controller = new CursorController();
     await controller.init();
     
     // Store reference for cleanup if needed
     window.cursorController = controller;
+    console.log('✅ Cursor controller initialized');
   } catch (error) {
     console.error('❌ Failed to initialize Cursor controller:', error);
     window.Utils?.showError('Failed to initialize cursor reset functionality.');

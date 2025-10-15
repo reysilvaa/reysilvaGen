@@ -143,11 +143,14 @@ function createAdminWindow() {
 }
 
 /**
- * Get or create tempmail service instance
+ * Get or create tempmail service instance (Singleton)
  */
 function getTempmailService() {
   if (!tempmailHeadless) {
+    logger.info('Creating new TempmailScraper instance...');
     tempmailHeadless = new TempmailScraper();
+  } else {
+    logger.debug('Reusing existing TempmailScraper instance');
   }
   return tempmailHeadless;
 }
@@ -300,67 +303,35 @@ ipcMain.handle('cursor-check-status', wrapHandler(async () => {
     return { isRunning };
 }));
 
-// Tempmail Handlers - Using lazy service pattern
-ipcMain.handle('tempmail-scrape-existing', lazyServiceHandler(
+// Tempmail Handlers - CRUD Methods
+ipcMain.handle('tempmail-create', lazyServiceHandler(
   getTempmailService,
-  async (service) => await service.scrapeExistingEmail()
+  async (service, event, params) => await service.create(params)
 ));
 
-ipcMain.handle('tempmail-generate', lazyServiceHandler(
+ipcMain.handle('tempmail-show', lazyServiceHandler(
   getTempmailService,
-  async (service, event, domain, customEmail) => await service.generateEmail(domain, customEmail)
+  async (service, event, params) => await service.show(params)
 ));
 
-ipcMain.handle('tempmail-check-inbox', wrapHandler(async () => {
-  if (!tempmailHeadless) {
-    return errorResponse('No email generated yet', { emails: [] });
-  }
-  return await tempmailHeadless.checkInbox();
-}));
+ipcMain.handle('tempmail-delete', lazyServiceHandler(
+  getTempmailService,
+  async (service, event, params) => await service.delete(params)
+));
 
-ipcMain.handle('tempmail-read-email', wrapHandler(async (event, emailId) => {
-  if (!tempmailHeadless) {
-    return errorResponse('No email generated yet');
-  }
-  return await tempmailHeadless.readEmail(emailId);
-}));
-
-ipcMain.handle('tempmail-get-current', wrapHandler(async () => {
-  if (!tempmailHeadless) {
-    return errorResponse('No email session', { email: null });
-  }
-    const email = tempmailHeadless.getCurrentEmail();
-  return successResponse({ email });
-}));
+ipcMain.handle('tempmail-execute', lazyServiceHandler(
+  getTempmailService,
+  async (service, event, params) => await service.execute(params)
+));
 
 ipcMain.handle('tempmail-clear', wrapHandler(async () => {
     if (tempmailHeadless) {
-      tempmailHeadless.clear();
+      await tempmailHeadless.clear();
       tempmailHeadless = null;
     }
   return successResponse();
 }));
 
-ipcMain.handle('tempmail-toggle-debug', wrapHandler(async () => {
-  if (!tempmailHeadless) {
-    return errorResponse('No window available');
-  }
-  return tempmailHeadless.toggleDebug();
-}));
-
-ipcMain.handle('tempmail-switch', lazyServiceHandler(
-  getTempmailService,
-  async (service, event, email) => await service.switchToEmail(email)
-));
-
-ipcMain.handle('tempmail-delete', wrapHandler(async () => {
-  if (!tempmailHeadless) {
-    return errorResponse('No active email');
-  }
-  return await tempmailHeadless.deleteCurrentEmail();
-}));
-
-// ==================== APPLICATION LIFECYCLE ====================
 
 app.whenReady().then(async () => {
   logger.info('Application starting...');
@@ -380,18 +351,24 @@ app.whenReady().then(async () => {
   logger.success('Application ready');
 });
 
-app.on('window-all-closed', () => {
+app.on('window-all-closed', async () => {
   if (process.platform !== 'darwin') {
     if (config) {
       config.close();
+    }
+    if (tempmailHeadless) {
+      await tempmailHeadless.clear();
     }
     app.quit();
   }
 });
 
-app.on('before-quit', () => {
+app.on('before-quit', async () => {
   if (config) {
     config.close();
+  }
+  if (tempmailHeadless) {
+    await tempmailHeadless.clear();
   }
   logger.info('Application shutting down');
 });
@@ -402,5 +379,12 @@ process.on('uncaughtException', (error) => {
 });
 
 process.on('unhandledRejection', (error) => {
-  logger.error('Unhandled rejection:', error);
+  // Only log significant errors, ignore common Puppeteer protocol errors
+  if (error && error.message && 
+      !error.message.includes('Request is already handled') &&
+      !error.message.includes('Protocol error') &&
+      !error.message.includes('Target closed') &&
+      !error.message.includes('Execution context was destroyed')) {
+    logger.error('Unhandled rejection:', error);
+  }
 });

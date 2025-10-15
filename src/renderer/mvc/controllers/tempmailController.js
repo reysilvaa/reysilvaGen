@@ -5,10 +5,12 @@
 
 class TempmailController extends BaseController {
   constructor() {
-    super('Tempmail', { logLevel: 'info' });
+    super('Tempmail', { logLevel: 'info', autoInit: false });
     this.selectedDomain = "";
     this.autoRefreshInterval = null;
     this.emailHistory = [];
+    this.syncInterval = null;
+    this.lastKnownEmail = null;
   }
 
   async onInit() {
@@ -22,12 +24,13 @@ class TempmailController extends BaseController {
 
   setupElements() {
     this.elements = this.getElements([
-      'new-email-btn', 'random-email-btn', 'check-inbox-btn', 
+      'tempmail-email-display', 'check-inbox-btn', 'new-email-btn', 
       'delete-email-btn', 'copy-email-btn', 'auto-refresh-checkbox',
-      'tempmail-email-display', 'tempmail-inbox', 'inbox-count-badge',
-      'email-history-list', 'create-email-modal', 'close-create-modal',
-      'domain-input', 'domain-dropdown', 'username-input', 'create-email-btn',
-      'email-detail-modal', 'close-email-modal', 'email-detail-subject', 'email-detail-body'
+      'tempmail-inbox', 'inbox-count-badge', 'email-history-list', 
+      'create-email-modal', 'close-create-modal', 'domain-input', 
+      'domain-dropdown', 'username-input', 'create-email-btn', 'random-email-btn',
+      'email-detail-modal', 'close-email-modal', 'email-detail-subject', 
+      'email-detail-body'
     ]);
   }
 
@@ -38,6 +41,9 @@ class TempmailController extends BaseController {
     this.addEventListener(this.elements['check-inbox-btn'], 'click', () => this.checkInbox(false));
     this.addEventListener(this.elements['delete-email-btn'], 'click', () => this.deleteEmail());
     this.addEventListener(this.elements['copy-email-btn'], 'click', () => this.copyCurrentEmail());
+
+    // Real-time sync triggers
+    this.setupRealTimeSync();
 
     // Modal handlers
     this.addEventListener(this.elements['close-create-modal'], 'click', () => this.hideCreateModal());
@@ -118,9 +124,44 @@ class TempmailController extends BaseController {
     dropdown.style.display = dropdown.style.display === "none" ? "block" : "none";
   }
 
+
   // Email Generation
   async generateRandomEmail() {
-    await this.generateEmailWithUsername(null, null);
+    await this.safeAsync(async () => {
+      // Don't clear/close browser - just generate new email
+      // The scraper will handle the state internally
+      
+      this.setGeneratingState();
+      this.stopAutoRefresh();
+      
+      try {
+        // Use new CRUD create method for random email
+        const result = await window.tempmailAPI.create({ type: 'random' });
+        
+        if (result.success && result.email) {
+          this.setEmailGenerated(result.email);
+          this.addToHistory(result.email);
+          this.showSuccess("Random email generated successfully!");
+          this.setEmptyInbox();
+          
+          // Auto check inbox after generation
+          setTimeout(() => this.checkInbox(true), 1000);
+        } else {
+          this.setEmailFailed();
+          if (result.message && result.message.includes('ERR_ABORTED')) {
+            this.showError('Unable to connect to tempmail service. Please try again later.');
+          } else if (result.message && result.message.includes('timeout')) {
+            this.showError('Connection timeout. Please try again.');
+          } else {
+            this.showError(result.message || "Failed to generate random email - please try again");
+          }
+        }
+      } catch (error) {
+        this.log('error', 'Random email generation error:', error);
+        this.setEmailFailed();
+        this.showError('Failed to generate random email. Please try again.');
+      }
+    }, 'Failed to generate random email');
   }
 
   async createCustomEmail() {
@@ -139,53 +180,194 @@ class TempmailController extends BaseController {
 
   async generateEmailWithUsername(username = null, domain = null) {
     await this.safeAsync(async () => {
-      // Clear previous email
-      await window.tempmailAPI.clear();
+      // Don't clear/close browser - just generate new email
+      // The scraper will handle the state internally
       
       this.setGeneratingState();
       this.stopAutoRefresh();
       
       let result;
-      if (username && domain) {
-        const customEmail = `${username}@${domain}`;
-        result = await window.tempmailAPI.generateEmail(domain, customEmail);
-      } else {
-        result = await window.tempmailAPI.generateEmail(null, null);
-      }
-      
-      if (result.success && result.email) {
-        this.setEmailGenerated(result.email);
-        this.addToHistory(result.email);
-        this.showGenerationSuccess(result, username, domain);
-      } else {
+      try {
+        if (username && domain) {
+          // Use new CRUD create method for custom email
+          result = await window.tempmailAPI.create({ 
+            type: 'custom', 
+            username: username, 
+            domain: domain 
+          });
+        } else {
+          // Use new CRUD create method for random email
+          result = await window.tempmailAPI.create({ type: 'random' });
+        }
+        
+        if (result.success && result.email) {
+          this.setEmailGenerated(result.email);
+          this.addToHistory(result.email);
+          this.showGenerationSuccess(result, username, domain);
+        } else {
+          // Handle generation failure
+          this.setEmailFailed();
+          if (result.message && result.message.includes('ERR_ABORTED')) {
+            this.showError('Unable to connect to tempmail service. Please try again later.');
+          } else if (result.message && result.message.includes('timeout')) {
+            this.showError('Connection timeout. Please try again.');
+          } else {
+            this.showError(result.message || "Failed to generate email - please try again");
+          }
+        }
+      } catch (error) {
+        this.log('error', 'Email generation error:', error);
         this.setEmailFailed();
-        this.showError(result.message || "Failed to generate email - please try again");
+        this.showError('Failed to generate email. Please try again.');
       }
     }, 'Failed to generate email');
   }
 
   async autoScrapeExistingEmail() {
     try {
+      // Only initialize once when first loaded
+      if (window.tempmailInitialized) {
+        this.log('info', 'Tempmail already initialized, syncing current state...');
+        // Sync current state from Chrome
+        await this.syncCurrentEmail();
+        return;
+      }
+      
       this.setLoadingState();
-      this.log('info', 'Auto-scraping existing email on tab load...');
+      this.log('info', 'Initializing and checking for existing email...');
       
-      const existingResult = await window.tempmailAPI.scrapeExisting();
+      // Use new CRUD execute method for initialization
+      const initResult = await window.tempmailAPI.execute({ action: 'initialize' });
       
-      if (existingResult.success && existingResult.email) {
-        this.log('success', 'Found existing email:', existingResult.email);
-        this.setEmailGenerated(existingResult.email);
-        this.addToHistory(existingResult.email);
+      if (initResult.success && initResult.email) {
+        this.log('success', `Found existing email via ${initResult.message}:`, initResult.email);
+        this.setEmailGenerated(initResult.email);
+        this.addToHistory(initResult.email);
         this.setEmptyInbox();
+        
+        // Mark as initialized
+        window.tempmailInitialized = true;
         
         // Auto check inbox after getting existing email
         setTimeout(() => this.checkInbox(true), 1000);
       } else {
-        this.log('warn', 'No existing email found');
-        this.setNoEmailState();
+        this.log('warn', 'No existing email found during initialization');
+        this.handleServiceUnavailable(initResult.message);
+        // Mark as initialized even if no email found
+        window.tempmailInitialized = true;
       }
     } catch (error) {
-      this.log('error', 'Error auto-scraping existing email:', error);
-      this.setNoEmailState();
+      this.log('error', 'Error during initialization:', error);
+      this.handleServiceError(error);
+      // Mark as initialized even on error to prevent retry loops
+      window.tempmailInitialized = true;
+    }
+  }
+
+  // Setup real-time sync system
+  setupRealTimeSync() {
+    // 1. Tab visibility change
+    document.addEventListener('visibilitychange', () => {
+      if (!document.hidden && window.tempmailInitialized) {
+        setTimeout(() => this.syncCurrentEmail(), 500);
+      }
+    });
+
+    // 2. Window focus/blur
+    window.addEventListener('focus', () => {
+      if (window.tempmailInitialized) {
+        setTimeout(() => this.syncCurrentEmail(), 300);
+      }
+    });
+
+    // 3. Mouse enter on tempmail tab (when user hovers)
+    const tempmailTab = document.querySelector('[data-tab="tempmail"]');
+    if (tempmailTab) {
+      this.addEventListener(tempmailTab, 'mouseenter', () => {
+        if (window.tempmailInitialized) {
+          this.syncCurrentEmail();
+        }
+      });
+    }
+
+    // 4. Start periodic sync
+    this.startPeriodicSync();
+  }
+
+  // Start periodic sync every 5 seconds
+  startPeriodicSync() {
+    if (this.syncInterval) {
+      clearInterval(this.syncInterval);
+    }
+
+    this.syncInterval = setInterval(() => {
+      if (window.tempmailInitialized && !document.hidden) {
+        this.syncCurrentEmail();
+      }
+    }, 5000); // Sync every 5 seconds
+
+    this.log('info', 'Periodic sync started (every 5 seconds)');
+  }
+
+  // Stop periodic sync
+  stopPeriodicSync() {
+    if (this.syncInterval) {
+      clearInterval(this.syncInterval);
+      this.syncInterval = null;
+      this.log('info', 'Periodic sync stopped');
+    }
+  }
+
+  // Sync current email from Chrome to Electron
+  async syncCurrentEmail() {
+    try {
+      const result = await window.tempmailAPI.show({ action: 'current' });
+      
+      if (result.success && result.email) {
+        const currentDisplayed = this.elements['tempmail-email-display'].textContent;
+        
+        // Only update if email actually changed
+        if (currentDisplayed !== result.email && this.lastKnownEmail !== result.email) {
+          this.log('info', `🔄 Syncing: Chrome has ${result.email}, Electron shows ${currentDisplayed}`);
+          this.setEmailGenerated(result.email);
+          this.addToHistory(result.email);
+          this.lastKnownEmail = result.email;
+          
+          // Show subtle notification
+          this.showInfo(`Synced: ${result.email}`);
+          
+          // Auto check inbox for synced email
+          setTimeout(() => this.checkInbox(true), 1000);
+        }
+      }
+    } catch (error) {
+      // Silently fail to avoid spam
+      this.log('debug', 'Sync failed (silent):', error.message);
+    }
+  }
+
+  handleServiceUnavailable(message) {
+    this.setNoEmailState();
+    
+    // Show user-friendly message about service availability
+    if (message && message.includes('ERR_ABORTED')) {
+      this.showError('Tempmail service is temporarily unavailable. Please try again later.');
+    } else if (message && message.includes('timeout')) {
+      this.showError('Connection timeout. Please check your internet connection and try again.');
+    } else {
+      this.showError('Tempmail service is not available. Please try again later.');
+    }
+  }
+
+  handleServiceError(error) {
+    this.setNoEmailState();
+    
+    if (error.message.includes('ERR_ABORTED')) {
+      this.showError('Unable to connect to tempmail service. Please try again later.');
+    } else if (error.message.includes('timeout')) {
+      this.showError('Connection timeout. Please try again.');
+    } else {
+      this.showError('Service error. Please try again later.');
     }
   }
 
@@ -212,16 +394,34 @@ class TempmailController extends BaseController {
     if (!confirmed) return;
 
     await this.safeAsync(async () => {
-      const result = await window.tempmailAPI.deleteEmail();
+      // Use new CRUD delete method (backend will check current email automatically)
+      const result = await window.tempmailAPI.delete();
+      
+      // Debug logging
+      this.log('info', 'Delete result:', result);
       
       if (result.success) {
         // Remove from history
         this.emailHistory = this.emailHistory.filter(e => e !== result.deletedEmail);
+        
+        if (result.autoGenerated && result.newEmail) {
+          // Website auto-generated new email
+          this.log('success', `Website auto-generated new email: ${result.newEmail}`);
+          this.setEmailGenerated(result.newEmail);
+          this.addToHistory(result.newEmail);
+          this.setEmptyInbox();
+          this.showSuccess(`${result.message}. Website auto-generated: ${result.newEmail}`);
+          
+          // Auto check inbox for new email
+          setTimeout(() => this.checkInbox(true), 1000);
+        } else {
+          // No new email generated
+          this.log('warn', 'No new email auto-generated after delete');
+          this.setNoEmailState();
+          this.showSuccess(`${result.message}. Click 'Random' or 'New' to generate a new email.`);
+        }
+        
         this.renderHistory();
-
-        // Reset UI
-        this.setNoEmailState();
-        this.showSuccess(result.message);
       } else {
         this.showError(result.message || "Failed to delete email");
       }
@@ -233,7 +433,8 @@ class TempmailController extends BaseController {
     if (!silent) this.showLoading();
     
     try {
-      const result = await window.tempmailAPI.checkInbox();
+      // Use new CRUD execute method for inbox
+      const result = await window.tempmailAPI.execute({ action: 'inbox' });
       
       if (result.success && result.emails && result.emails.length > 0) {
         this.renderInbox(result.emails);
@@ -244,12 +445,34 @@ class TempmailController extends BaseController {
         this.setEmptyInbox();
         if (!silent) this.showSuccess("Inbox checked - no new emails");
       } else {
-        if (!silent) this.showError(result.message || "Failed to check inbox");
+        // Handle service errors gracefully
+        this.handleInboxError(result, silent);
       }
     } catch (error) {
-      if (!silent) this.showError(`Error: ${error.message}`);
+      this.log('error', 'Inbox check error:', error);
+      this.handleInboxError({ message: error.message }, silent);
     } finally {
       if (!silent) this.hideLoading();
+    }
+  }
+
+  handleInboxError(result, silent) {
+    const message = result.message || "Failed to check inbox";
+    
+    if (message.includes('ERR_ABORTED') || message.includes('No email generated yet')) {
+      this.setEmptyInbox();
+      if (!silent) {
+        this.showInfo('Unable to check inbox - service temporarily unavailable');
+      }
+    } else if (message.includes('timeout')) {
+      this.setEmptyInbox();
+      if (!silent) {
+        this.showError('Connection timeout while checking inbox');
+      }
+    } else {
+      if (!silent) {
+        this.showError(message);
+      }
     }
   }
 
@@ -296,7 +519,8 @@ class TempmailController extends BaseController {
     this.elements['tempmail-email-display'].textContent = email;
     this.elements['copy-email-btn'].style.display = "flex";
     this.elements['check-inbox-btn'].disabled = false;
-    this.elements['delete-email-btn'].disabled = false;
+    this.elements['delete-email-btn'].disabled = false;    
+    this.renderHistory();
   }
 
   setEmailFailed() {
@@ -335,13 +559,11 @@ class TempmailController extends BaseController {
   showGenerationSuccess(result, username, domain) {
     if (username && domain && result.email !== `${username}@${domain}`) {
       this.showSuccess(`Email created: ${result.email}`);
-    } else if (result.isOffline && !username) {
-      this.showSuccess("Email generated (offline mode)");
     } else {
       this.showSuccess("Email generated successfully!");
     }
   }
-
+  
   // History Management
   addToHistory(email) {
     if (!this.emailHistory.includes(email)) {
@@ -400,7 +622,8 @@ class TempmailController extends BaseController {
 
   async switchToEmail(email) {
     await this.safeAsync(async () => {
-      const result = await window.tempmailAPI.switchToEmail(email);
+      // Use new CRUD execute method for switch
+      const result = await window.tempmailAPI.execute({ action: 'switch', email: email });
       
       if (result.success && result.email) {
         this.setEmailGenerated(result.email);
@@ -511,7 +734,8 @@ class TempmailController extends BaseController {
     bodyEl.innerHTML = '<p class="placeholder">Loading email...</p>';
 
     try {
-      const result = await window.tempmailAPI.readEmail(emailId);
+      // Use new CRUD execute method for read
+      const result = await window.tempmailAPI.execute({ action: 'read', emailId: emailId });
       
       if (result.success && result.email) {
         const email = result.email;
@@ -551,17 +775,32 @@ class TempmailController extends BaseController {
   onDestroy() {
     // Clean up auto refresh interval
     this.stopAutoRefresh();
+    
+    // Clean up sync interval
+    this.stopPeriodicSync();
   }
 }
 
-// Initialize controller
+// Initialize controller (singleton pattern to prevent duplicates)
 async function initTempmailTab() {
   try {
+    // Prevent multiple initialization
+    if (window.tempmailController && !window.tempmailController.isDestroyed) {
+      console.log('ℹ️ Tempmail controller already initialized, skipping...');
+      return;
+    }
+
+    // Cleanup existing controller if any
+    if (window.tempmailController) {
+      window.tempmailController.destroy();
+    }
+
     const controller = new TempmailController();
     await controller.init();
     
     // Store reference for cleanup if needed
     window.tempmailController = controller;
+    console.log('✅ Tempmail controller initialized');
   } catch (error) {
     console.error('❌ Failed to initialize Tempmail controller:', error);
     window.Utils?.showError('Failed to initialize temporary email functionality.');

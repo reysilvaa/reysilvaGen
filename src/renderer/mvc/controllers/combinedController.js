@@ -146,14 +146,26 @@ class CombinedController extends BaseController {
   }
 }
 
-// Initialize controller
+// Initialize controller (singleton pattern to prevent duplicates)
 async function initCombinedTab() {
   try {
+    // Prevent multiple initialization
+    if (window.combinedController && !window.combinedController.isDestroyed) {
+      console.log('ℹ️ Combined controller already initialized, skipping...');
+      return;
+    }
+
+    // Cleanup existing controller if any
+    if (window.combinedController) {
+      window.combinedController.destroy();
+    }
+
     const controller = new CombinedController();
     await controller.init();
     
     // Store reference for cleanup if needed
     window.combinedController = controller;
+    console.log('✅ Combined controller initialized');
   } catch (error) {
     console.error('❌ Failed to initialize Combined controller:', error);
     window.Utils?.showError('Failed to initialize combined generator.');

@@ -129,7 +129,13 @@ class Logger {
 // Create default logger instance
 const defaultLogger = new Logger();
 
-module.exports = {
+// Factory function to create loggers with prefix
+function createLogger(prefix) {
+  return new Logger(prefix);
+}
+
+// Export factory function as default, with additional properties
+module.exports = Object.assign(createLogger, {
   Logger,
   LOG_LEVELS,
   LOG_SYMBOLS,
@@ -140,5 +146,5 @@ module.exports = {
   info: (...args) => defaultLogger.info(...args),
   success: (...args) => defaultLogger.success(...args),
   debug: (...args) => defaultLogger.debug(...args)
-};
+});
 

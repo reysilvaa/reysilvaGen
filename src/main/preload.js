@@ -39,17 +39,16 @@ contextBridge.exposeInMainWorld("cursorResetAPI", {
   checkCursorStatus: () => ipcRenderer.invoke("cursor-check-status"),
 });
 
-// Tempmail API
+// Tempmail API - Clean CRUD Interface
 contextBridge.exposeInMainWorld("tempmailAPI", {
-  scrapeExisting: () => ipcRenderer.invoke("tempmail-scrape-existing"),
-  generateEmail: (domain, customEmail) => ipcRenderer.invoke("tempmail-generate", domain, customEmail),
-  checkInbox: () => ipcRenderer.invoke("tempmail-check-inbox"),
-  readEmail: (emailId) => ipcRenderer.invoke("tempmail-read-email", emailId),
-  getCurrentEmail: () => ipcRenderer.invoke("tempmail-get-current"),
+  // CRUD Methods
+  create: (params) => ipcRenderer.invoke("tempmail-create", params),
+  show: (params) => ipcRenderer.invoke("tempmail-show", params),
+  delete: (params) => ipcRenderer.invoke("tempmail-delete", params),
+  execute: (params) => ipcRenderer.invoke("tempmail-execute", params),
+  
+  // Utility methods
   clear: () => ipcRenderer.invoke("tempmail-clear"),
-  toggleDebug: () => ipcRenderer.invoke("tempmail-toggle-debug"),
-  switchToEmail: (email) => ipcRenderer.invoke("tempmail-switch", email),
-  deleteEmail: () => ipcRenderer.invoke("tempmail-delete"),
 });
 
 // Auto Updater API

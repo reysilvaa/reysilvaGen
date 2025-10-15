@@ -99,7 +99,12 @@ const WEB = {
   TEMPMAIL_URL: 'https://tempmail.ac.id',
   TEMPMAIL_SWITCH_URL: 'https://tempmail.ac.id/switch',
   DEFAULT_DOMAINS: ['oliq.me', 'asmojo.tech', 'gipo.me'],
-  USER_AGENT: 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'
+  USER_AGENT: 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+  
+  // Connection settings for better reliability
+  CONNECTION_TIMEOUT: 15000,
+  MAX_RETRIES: 3,
+  RETRY_DELAY: 2000
 };
 
 // Validation constants

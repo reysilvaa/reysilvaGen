@@ -9,6 +9,7 @@ class BaseController {
     this.name = name;
     this.utils = window.Utils;
     this.isInitialized = false;
+    this.isDestroyed = false;
     this.eventListeners = [];
     this.options = {
       autoInit: true,
@@ -73,6 +74,7 @@ class BaseController {
     this.onDestroy();
     
     this.isInitialized = false;
+    this.isDestroyed = true;
     this.log('info', `${this.name} controller destroyed`);
   }
 

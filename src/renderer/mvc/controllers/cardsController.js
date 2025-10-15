@@ -230,14 +230,26 @@ class CardsController extends BaseController {
   }
 }
 
-// Initialize controller
+// Initialize controller (singleton pattern to prevent duplicates)
 async function initCardsTab() {
   try {
+    // Prevent multiple initialization
+    if (window.cardsController && !window.cardsController.isDestroyed) {
+      console.log('ℹ️ Cards controller already initialized, skipping...');
+      return;
+    }
+
+    // Cleanup existing controller if any
+    if (window.cardsController) {
+      window.cardsController.destroy();
+    }
+
     const controller = new CardsController();
     await controller.init();
     
     // Store reference for cleanup if needed
     window.cardsController = controller;
+    console.log('✅ Cards controller initialized');
   } catch (error) {
     console.error('❌ Failed to initialize Cards controller:', error);
     window.Utils?.showError('Failed to initialize card generator. Please restart the application.');

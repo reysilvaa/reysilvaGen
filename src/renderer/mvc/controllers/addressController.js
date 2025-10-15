@@ -122,14 +122,26 @@ class AddressController extends BaseController {
   }
 }
 
-// Initialize controller
+// Initialize controller (singleton pattern to prevent duplicates)
 async function initAddressTab() {
   try {
+    // Prevent multiple initialization
+    if (window.addressController && !window.addressController.isDestroyed) {
+      console.log('ℹ️ Address controller already initialized, skipping...');
+      return;
+    }
+
+    // Cleanup existing controller if any
+    if (window.addressController) {
+      window.addressController.destroy();
+    }
+
     const controller = new AddressController();
     await controller.init();
     
     // Store reference for cleanup if needed
     window.addressController = controller;
+    console.log('✅ Address controller initialized');
   } catch (error) {
     console.error('❌ Failed to initialize Address controller:', error);
     window.Utils?.showError('Failed to initialize address generator.');
