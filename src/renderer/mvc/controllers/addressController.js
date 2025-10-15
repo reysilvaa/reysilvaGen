@@ -110,9 +110,9 @@ class AddressController extends BaseController {
         <div class="address-field clickable-field" 
              onclick="copyToClipboard('${escapedValue}', '${field.label}')" 
              title="Click to copy ${field.label}">
-          <strong>${field.label}</strong>
-          <span>${field.value}</span>
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="opacity: 0.5; margin-left: 8px;">
+          <strong class="address-field__label">${field.label}</strong>
+          <span class="address-field__value">${field.value}</span>
+          <svg class="address-field__copy-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
             <rect x="9" y="9" width="13" height="13" rx="2" ry="2"/>
             <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/>
           </svg>

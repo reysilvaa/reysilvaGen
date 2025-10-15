@@ -36,11 +36,17 @@
   background: rgba(255, 255, 255, 0.1);
   transform: translate(-50%, -50%);
   transition: width 0.6s, height 0.6s;
+  z-index: 0;
 }
 
 .btn:hover::before {
   width: 300px;
   height: 300px;
+}
+
+.btn > * {
+  position: relative;
+  z-index: 1;
 }
 
 .btn:hover {
@@ -69,7 +75,7 @@
 
 .btn--primary:hover {
   background: var(--color-accent-hover);
-  box-shadow: 0 4px 16px rgba(255, 255, 255, 0.2);
+  box-shadow: 0 4px 16px rgba(255, 255, 255, 0.3);
 }
 
 .btn--secondary {

@@ -264,3 +264,44 @@
   flex-direction: column;
   animation: fadeIn var(--transition) ease;
 }
+
+/* ===== TAB CONTAINERS - LEFT-RIGHT LAYOUT ===== */
+.card-generator,
+.address-fetcher,
+.combined-mode {
+  display: grid;
+  grid-template-columns: 420px 1fr;
+  gap: var(--space-6);
+  height: calc(100vh - 200px);
+  flex: 1;
+  overflow: hidden;
+}
+
+/* Ensure panels fit properly in the grid */
+.card-generator .settings-panel,
+.card-generator .info-panel,
+.address-fetcher .info-panel,
+.combined-mode .info-panel {
+  display: flex;
+  flex-direction: column;
+  overflow-y: auto;
+}
+
+.card-generator .output-panel,
+.address-fetcher .output-panel,
+.combined-mode .output-panel {
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+/* ===== RESPONSIVE TAB LAYOUTS ===== */
+@media (max-width: 1024px) {
+  .card-generator,
+  .address-fetcher,
+  .combined-mode {
+    grid-template-columns: 1fr;
+    height: auto;
+    gap: var(--space-4);
+  }
+}

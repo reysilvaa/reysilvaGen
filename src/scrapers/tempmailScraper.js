@@ -138,17 +138,54 @@ class TempmailScraper {
             }
             return { email: null, found: false };
 
-          case 'getAvailableEmails':
+          case 'clickEmailDisplay': {
+            const emailDisplay = document.getElementById('email_id');
+            if (emailDisplay) {
+              emailDisplay.click();
+              return { success: true };
+            }
+            return { success: false, error: 'Email display not found' };
+          }
+
+          case 'getAvailableEmails': {
             const emails = [];
-            const dropdown = document.querySelector('.rounded-md.shadow-xs.max-h-96.overflow-y-auto.py-1.bg-white');
+            
+            // Try multiple selectors for the dropdown
+            let dropdown = document.querySelector('.rounded-md.shadow-xs.max-h-96.overflow-y-auto.py-1.bg-white');
+            if (!dropdown) {
+              dropdown = document.querySelector('[role="menu"]');
+            }
+            if (!dropdown) {
+              dropdown = document.querySelector('.absolute.z-10');
+            }
+            if (!dropdown) {
+              dropdown = document.querySelector('.dropdown-menu');
+            }
+            
             if (dropdown) {
-              const links = dropdown.querySelectorAll('a.block.px-4.py-2.text-sm.leading-5.text-gray-700');
+              // Try multiple selectors for email links
+              let links = dropdown.querySelectorAll('a.block.px-4.py-2.text-sm.leading-5.text-gray-700');
+              if (links.length === 0) {
+                links = dropdown.querySelectorAll('a[href*="@"]');
+              }
+              if (links.length === 0) {
+                links = dropdown.querySelectorAll('a');
+              }
+              
               links.forEach(link => {
                 const email = link.textContent?.trim();
-                if (email && email.includes('@')) emails.push(email);
+                if (email && email.includes('@')) {
+                  emails.push(email);
+                }
               });
             }
+            
             return emails;
+          }
+
+          case 'closeDropdown':
+            document.body.click();
+            return { success: true };
 
           case 'generateRandom':
             const newBtn = document.querySelector('div[x-on\\:click*="in_app = true"]');
@@ -325,22 +362,30 @@ class TempmailScraper {
             }
             return { success: false, error: 'Email not found' };
 
-          case 'switchEmail':
+          case 'switchEmail': {
             const targetEmail = params.email;
             const emailDisplay = document.getElementById('email_id');
-            if (emailDisplay) emailDisplay.click();
+            if (!emailDisplay) {
+              return { success: false, error: 'Email display element not found' };
+            }
             
-            setTimeout(() => {
-              const emailLinks = document.querySelectorAll('a.block.px-4.py-2.text-sm.leading-5.text-gray-700');
-              for (const link of emailLinks) {
-                if (link.textContent?.trim() === targetEmail) {
-                  link.click();
-                  return { success: true };
+            emailDisplay.click();
+            
+            // Wait for dropdown to appear and find the target email
+            return new Promise((resolve) => {
+              setTimeout(() => {
+                const emailLinks = document.querySelectorAll('a.block.px-4.py-2.text-sm.leading-5.text-gray-700');
+                for (const link of emailLinks) {
+                  if (link.textContent?.trim() === targetEmail) {
+                    link.click();
+                    resolve({ success: true });
+                    return;
+                  }
                 }
-              }
-              return { success: false, error: 'Email not found in dropdown' };
-            }, 300);
-            return { success: true };
+                resolve({ success: false, error: 'Email not found in dropdown' });
+              }, 300);
+            });
+          }
 
           default:
             return { success: false, error: `Unknown action: ${action}` };
@@ -515,7 +560,21 @@ class TempmailScraper {
           }
 
         case 'available':
+          // Click to open dropdown
+          const clickResult = await this.performAction('clickEmailDisplay');
+          if (!clickResult.success) {
+            return createErrorResponse('Failed to open email dropdown');
+          }
+          
+          // Wait for dropdown to load
+          await this.wait(1000);
+          
+          // Get available emails
           const emails = await this.performAction('getAvailableEmails');
+          
+          // Close dropdown
+          await this.performAction('closeDropdown');
+          
           return createSuccessResponse(
             `Found ${emails.length} available email(s)`,
             { emails, count: emails.length }

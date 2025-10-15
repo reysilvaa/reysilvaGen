@@ -1,0 +1,156 @@
+/* ========================================
+   ADDRESS COMPONENTS
+   Address field styling and layout
+   ======================================== */
+
+/* ===== ADDRESS FIELD BASE ===== */
+.address-field {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: var(--space-3) var(--space-4);
+  background: var(--color-bg-secondary);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  margin-bottom: var(--space-3);
+  transition: all var(--transition);
+  cursor: pointer;
+  position: relative;
+}
+
+.address-field:hover {
+  background: var(--color-bg-hover);
+  border-color: var(--color-accent);
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+.address-field:active {
+  transform: translateY(0);
+}
+
+.address-field.clickable-field {
+  user-select: none;
+}
+
+/* ===== ADDRESS FIELD CONTENT ===== */
+.address-field__label {
+  font-size: var(--text-sm);
+  font-weight: var(--weight-semibold);
+  color: var(--color-text-secondary);
+  margin-right: var(--space-3);
+  min-width: 120px;
+  text-align: left;
+}
+
+.address-field__value {
+  flex: 1;
+  font-size: var(--text-base);
+  color: var(--color-text-primary);
+  font-family: var(--font-mono);
+  font-weight: var(--weight-medium);
+  text-align: left;
+  padding: 0 var(--space-2);
+}
+
+.address-field__copy-icon {
+  width: 14px;
+  height: 14px;
+  opacity: 0.5;
+  transition: opacity var(--transition);
+  flex-shrink: 0;
+  color: var(--color-text-muted);
+}
+
+.address-field:hover .address-field__copy-icon {
+  opacity: 1;
+  color: var(--color-accent);
+}
+
+/* ===== ADDRESS OUTPUT CONTAINER ===== */
+.address-output {
+  background: var(--color-bg-primary);
+  border-radius: var(--radius-md);
+  padding: var(--space-5);
+  border: 1px solid var(--color-border);
+  min-height: 400px;
+}
+
+.address-output:empty::before {
+  content: "Click 'Generate Address' to create a new address";
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 350px;
+  color: var(--color-text-muted);
+  font-size: var(--text-base);
+  text-align: center;
+}
+
+/* ===== ADDRESS GENERATION CONTROLS ===== */
+.address-controls {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+  margin-bottom: var(--space-6);
+}
+
+.address-option {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  padding: var(--space-3);
+  background: var(--color-bg-secondary);
+  border-radius: var(--radius-md);
+  border: 1px solid var(--color-border);
+}
+
+.address-option label {
+  font-size: var(--text-sm);
+  color: var(--color-text-secondary);
+  cursor: pointer;
+  user-select: none;
+}
+
+/* ===== RESPONSIVE ADDRESS ===== */
+@media (max-width: 768px) {
+  .address-field {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: var(--space-2);
+    padding: var(--space-3);
+  }
+  
+  .address-field__label {
+    min-width: auto;
+    margin-right: 0;
+    font-size: var(--text-xs);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+  }
+  
+  .address-field__value {
+    font-size: var(--text-sm);
+    padding: 0;
+  }
+  
+  .address-field__copy-icon {
+    position: absolute;
+    top: var(--space-2);
+    right: var(--space-2);
+  }
+  
+  .address-output {
+    padding: var(--space-3);
+  }
+}
+
+@media (max-width: 480px) {
+  .address-field {
+    margin-bottom: var(--space-2);
+  }
+  
+  .address-field__value {
+    word-break: break-all;
+  }
+}

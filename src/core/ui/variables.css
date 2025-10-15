@@ -5,22 +5,22 @@
 
 :root {
   /* ===== COLORS ===== */
-  --color-bg-primary: #0a0a0a;
-  --color-bg-secondary: #141414;
+  --color-bg-primary: #000000;
+  --color-bg-secondary: #111111;
   --color-bg-tertiary: #1a1a1a;
-  --color-bg-hover: #252525;
-  --color-bg-active: #2d2d2d;
+  --color-bg-hover: #222222;
+  --color-bg-active: #2a2a2a;
   
   --color-text-primary: #ffffff;
-  --color-text-secondary: #b0b0b0;
-  --color-text-muted: #707070;
+  --color-text-secondary: #e5e5e5;
+  --color-text-muted: #888888;
   
   --color-accent: #ffffff;
-  --color-accent-hover: #e0e0e0;
+  --color-accent-hover: #f0f0f0;
   --color-accent-alpha: rgba(255, 255, 255, 0.1);
   
-  --color-border: #2a2a2a;
-  --color-border-light: #3a3a3a;
+  --color-border: #333333;
+  --color-border-light: #444444;
   
   --color-success: #10b981;
   --color-success-alpha: rgba(16, 185, 129, 0.1);

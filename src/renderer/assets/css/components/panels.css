@@ -6,16 +6,30 @@
 /* ===== BASE PANEL ===== */
 .panel {
   background: var(--color-bg-secondary);
-  border-radius: var(--radius-md);
+  border-radius: var(--radius-lg);
   padding: var(--space-6);
   border: 1px solid var(--color-border);
   overflow-y: auto;
   box-shadow: var(--shadow-sm);
-  transition: border-color var(--transition);
+  transition: all var(--transition);
+  position: relative;
+}
+
+.panel::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, var(--color-accent-alpha), transparent);
+  opacity: 0.5;
 }
 
 .panel:hover {
   border-color: var(--color-border-light);
+  transform: translateY(-2px);
+  box-shadow: var(--shadow);
 }
 
 /* ===== PANEL VARIANTS ===== */

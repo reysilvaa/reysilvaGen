@@ -19,7 +19,7 @@
 
 /* ===== EMAIL DISPLAY CARD ===== */
 .email-display-card {
-  background: linear-gradient(135deg, rgba(74, 158, 255, 0.08) 0%, rgba(118, 75, 162, 0.08) 100%);
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.03) 0%, rgba(255, 255, 255, 0.08) 100%);
   border: 2px solid var(--color-border);
   border-radius: var(--radius-md);
   padding: var(--space-4);
@@ -78,19 +78,19 @@
 
 /* ===== OTP CARD ===== */
 .otp-card {
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  background: var(--color-accent);
   border-radius: var(--radius-lg);
   padding: var(--space-5);
   margin-bottom: var(--space-4);
-  box-shadow: 0 8px 16px rgba(102, 126, 234, 0.3);
-  color: white;
+  box-shadow: 0 8px 16px rgba(255, 255, 255, 0.2);
+  color: var(--color-bg-primary);
 }
 
 .otp-header {
   display: flex;
   align-items: center;
   gap: var(--space-2);
-  color: rgba(255, 255, 255, 0.9);
+  color: var(--color-bg-primary);
   font-size: var(--text-sm);
   font-weight: var(--weight-semibold);
   text-transform: uppercase;
@@ -101,21 +101,21 @@
 .otp-code {
   font-size: 36px;
   font-weight: var(--weight-bold);
-  color: white;
+  color: var(--color-bg-primary);
   font-family: var(--font-mono);
   letter-spacing: 6px;
   text-align: center;
   margin-bottom: var(--space-4);
   user-select: all;
-  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+  text-shadow: none;
 }
 
 .btn-copy-otp {
   width: 100%;
-  background: rgba(255, 255, 255, 0.2);
+  background: rgba(0, 0, 0, 0.2);
   backdrop-filter: blur(10px);
-  border: 1px solid rgba(255, 255, 255, 0.3);
-  color: white;
+  border: 1px solid rgba(0, 0, 0, 0.3);
+  color: var(--color-bg-primary);
   padding: var(--space-2) var(--space-4);
   border-radius: var(--radius-md);
   font-size: var(--text-sm);
@@ -129,8 +129,8 @@
 }
 
 .btn-copy-otp:hover {
-  background: rgba(255, 255, 255, 0.3);
-  border-color: rgba(255, 255, 255, 0.5);
+  background: rgba(0, 0, 0, 0.3);
+  border-color: rgba(0, 0, 0, 0.5);
   transform: translateY(-1px);
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
 }
@@ -270,6 +270,37 @@
   color: var(--color-text-secondary);
   display: flex;
   align-items: center;
+}
+
+/* ===== CONNECTION STATUS ===== */
+.connection-status {
+  font-size: var(--text-xs);
+  font-weight: var(--weight-medium);
+  padding: var(--space-1) var(--space-2);
+  border-radius: var(--radius-sm);
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+  transition: all var(--transition);
+}
+
+.connection-status--connected {
+  background: var(--color-success-alpha);
+  color: var(--color-success);
+  border: 1px solid var(--color-success);
+}
+
+.connection-status--disconnected {
+  background: var(--color-danger-alpha);
+  color: var(--color-danger);
+  border: 1px solid var(--color-danger);
+}
+
+.connection-status--reconnecting {
+  background: var(--color-warning-alpha);
+  color: var(--color-warning);
+  border: 1px solid var(--color-warning);
+  animation: pulse 1.5s infinite;
 }
 
 /* ===== RESPONSIVE TEMPMAIL ===== */
