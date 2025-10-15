@@ -13,11 +13,11 @@
     "build": "set CSC_IDENTITY_AUTO_DISCOVERY=false && electron-builder --win --x64",
     "build:installer": "set CSC_IDENTITY_AUTO_DISCOVERY=false && electron-builder --win --x64 --config.win.target=nsis",
     "build:portable": "set CSC_IDENTITY_AUTO_DISCOVERY=false && electron-builder --win --x64 --config.win.target=portable",
-    "build:all": "set CSC_IDENTITY_AUTO_DISCOVERY=false && electron-builder --win --mac --linux",
-    "build:mac": "electron-builder --mac",
-    "build:linux": "electron-builder --linux",
+    "build:all": "npm run minify && set CSC_IDENTITY_AUTO_DISCOVERY=false && electron-builder --win --mac --linux",
+    "build:mac": "npm run minify && electron-builder --mac",
+    "build:linux": "npm run minify && electron-builder --linux",
     "build:dev": "npm run minify && electron dist/main/main.js --dev",
-    "publish": "set CSC_IDENTITY_AUTO_DISCOVERY=false && electron-builder --win --mac --linux --publish always"
+    "publish": "npm run minify && set CSC_IDENTITY_AUTO_DISCOVERY=false && electron-builder --win --mac --linux --publish always"
   },
   "keywords": [
     "card-generator",
