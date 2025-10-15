@@ -19,6 +19,7 @@ if (isDev) {
 // Utilities
 const { wrapHandler, lazyServiceHandler } = require('../core/utils/ipcHandler');
 const { createSuccessResponse, createErrorResponse } = require('../core/utils/validators');
+const { getAppVersion } = require('../core/utils/appVersion');
 const logger = require('../core/utils/logger');
 
 // Core modules
@@ -52,10 +53,6 @@ function createSplashScreen() {
   splashWindow.loadFile(path.join(PATHS.renderer, 'splash.html'));
   splashWindow.center();
   
-  // Send version to splash when ready
-  splashWindow.webContents.once('dom-ready', () => {
-    splashWindow.webContents.send('splash-version', app.getVersion());
-  });
   
   logger.info('Splash screen created');
 }
@@ -300,7 +297,7 @@ ipcMain.handle('set-setting', createServiceHandler(async (event, { key, value })
 
 // Config Management Handlers - Using getter factory
 ipcMain.handle('get-config-path', createGetterHandler(() => config.getConfigPath(), 'path'));
-ipcMain.handle('get-app-version', createGetterHandler(() => app.getVersion(), 'version'));
+ipcMain.handle('get-app-version', createGetterHandler(() => getAppVersion(), 'version'));
 
 ipcMain.handle('reset-config', createServiceHandler(async () => {
   config.resetToDefault();

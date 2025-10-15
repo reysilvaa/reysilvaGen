@@ -30,7 +30,7 @@ class CombinedController extends BaseController {
   async initializeCardGenerator() {
     try {
       this.log('info', 'Loading constants from main process...');
-      const constants = await this.initializeConstants();
+      const constants = await this.loadConstants();
       
       this.cardGenerator = new CardGenerator(constants);
       this.log('success', 'CardGenerator initialized successfully');
@@ -58,7 +58,7 @@ class CombinedController extends BaseController {
   }
 
   setupEventListeners() {
-    this.addEventListener(this.elements['generate-combined-btn'], 'click', () => {
+    this.addEvent(this.elements['generate-combined-btn'], 'click', () => {
       this.handleGenerate();
     });
   }
@@ -75,19 +75,19 @@ class CombinedController extends BaseController {
 
   async handleGenerate() {
     const binPattern = this.elements['combined-bin-select']?.value?.trim();
-    if (!this.validateAndShow(BaseController.quickValidate.selection, binPattern, 'BIN pattern')) {
+    if (!this.checkAndShow(BaseController.validate.selection, binPattern, 'BIN pattern')) {
       return;
     }
 
     const count = parseInt(this.elements['combined-count']?.value || '1');
-    if (!this.validateAndShow(BaseController.quickValidate.numberRange, count, 1, 100, 'Count')) {
+    if (!this.checkAndShow(BaseController.validate.numberRange, count, 1, 100, 'Count')) {
       return;
     }
 
     const selectedOption = this.elements['combined-bin-select']?.options[this.elements['combined-bin-select'].selectedIndex];
     const cardTypeFromDB = selectedOption?.getAttribute("data-card-type");
 
-    await this.safeAsync(async () => {
+    await this.run(async () => {
       // Generate cards
       const cards = this.cardGenerator.generateBulk(binPattern, count, {
         length: null,
@@ -148,31 +148,41 @@ class CombinedController extends BaseController {
 
     return output;
   }
+
+  /**
+   * Called when route enters
+   */
+  async onRouteEnter() {
+    // Combined tab doesn't need special activation logic
+  }
 }
 
 // Initialize controller (singleton pattern to prevent duplicates)
 async function initCombinedTab() {
-  try {
-    // Prevent multiple initialization
-    if (window.combinedController && !window.combinedController.isDestroyed) {
-      console.log('ℹ️ Combined controller already initialized, skipping...');
-      return;
-    }
+  // Prevent multiple initialization - return existing if available
+  if (window.combinedController && !window.combinedController.isDestroyed) {
+    console.log('ℹ️ Combined controller already initialized, returning existing...');
+    return window.combinedController;
+  }
 
+  try {
     // Cleanup existing controller if any
     if (window.combinedController) {
       window.combinedController.destroy();
     }
 
+    console.log('🎮 Creating new Combined controller...');
     const controller = new CombinedController();
     await controller.init();
     
     // Store reference for cleanup if needed
     window.combinedController = controller;
     console.log('✅ Combined controller initialized');
+    return controller;
   } catch (error) {
     console.error('❌ Failed to initialize Combined controller:', error);
     window.Utils?.showError('Failed to initialize combined generator.');
+    return null;
   }
 }
 

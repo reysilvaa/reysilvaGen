@@ -168,8 +168,8 @@ class AutoUpdaterManager {
    * @returns {string} Current app version
    */
   getCurrentVersion() {
-    const { app } = require('electron');
-    return app.getVersion();
+    const { getAppVersion } = require('../utils/appVersion');
+    return getAppVersion();
   }
 
   /**

@@ -3,10 +3,15 @@ const CardsTab = {
     return `
       <div class="tab-content tab-content--active" id="cards-tab">
         <div class="page-header">
-          <h2>Generate Cards</h2>
-          <p>
-            Generate credit card numbers from BIN patterns. All cards are
-            Luhn-valid.
+          <h2 class="page__title">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align: middle; margin-right: 8px;">
+              <rect x="3" y="3" width="18" height="18" rx="2"/>
+              <path d="M3 9h18M9 3v18"/>
+            </svg>
+            Generate Cards
+          </h2>
+          <p class="page__description">
+            Generate credit card numbers from BIN patterns. All cards are Luhn-valid and ready for testing.
           </p>
         </div>
 

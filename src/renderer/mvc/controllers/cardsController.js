@@ -17,31 +17,6 @@ class CardsController extends BaseController {
     this.setupElements();
     this.setupEventListeners();
     
-    // Register content area for cards output
-    this.registerContentArea('cards-output', {
-      type: 'cards',
-      emptyMessage: 'Click "Generate Cards" to create card numbers',
-      placeholderTemplate: '<p class="placeholder">Click "Generate Cards" to create card numbers</p>',
-      validators: [
-        (content, count) => ({
-          valid: count > 0,
-          message: 'No cards to process'
-        })
-      ]
-    });
-    
-    // Register validation rules
-    this.registerValidationRules('cards-form', {
-      'bin-select': [
-        { type: 'selection', message: 'Please select a BIN pattern' }
-      ],
-      'card-count': [
-        { type: 'required', message: 'Card count is required' },
-        { type: 'number', message: 'Card count must be a valid number' },
-        { type: 'min', value: 1, message: 'Card count must be at least 1' },
-        { type: 'max', value: 10000, message: 'Card count must be at most 10000' }
-      ]
-    });
   }
 
   async initializeCardGenerator() {
@@ -49,7 +24,7 @@ class CardsController extends BaseController {
     
     try {
       this.log('info', 'Loading constants from main process...');
-      const constants = await this.initializeConstants();
+      const constants = await this.loadConstants();
       
       this.cardGenerator = new CardGenerator(constants);
       this.log('success', 'CardGenerator initialized successfully');
@@ -69,22 +44,22 @@ class CardsController extends BaseController {
   }
 
   setupEventListeners() {
-    this.addEventListener(this.elements['generate-btn'], 'click', () => this.handleGenerate());
-    this.addEventListener(this.elements['save-btn'], 'click', () => this.handleSave());
-    this.addEventListener(this.elements['copy-btn'], 'click', () => this.handleCopy());
-    this.addEventListener(this.elements['clear-btn'], 'click', () => this.handleClear());
-    this.addEventListener(this.elements['output-format'], 'change', () => this.handleFormatChange());
+    this.addEvent(this.elements['generate-btn'], 'click', () => this.handleGenerate());
+    this.addEvent(this.elements['save-btn'], 'click', () => this.handleSave());
+    this.addEvent(this.elements['copy-btn'], 'click', () => this.handleCopy());
+    this.addEvent(this.elements['clear-btn'], 'click', () => this.handleClear());
+    this.addEvent(this.elements['output-format'], 'change', () => this.handleFormatChange());
   }
 
   async handleGenerate() {
     // Use BaseController validation
     const binPattern = this.elements['bin-select']?.value?.trim();
-    if (!this.validateAndShow(BaseController.quickValidate.selection, binPattern, 'BIN pattern')) {
+    if (!this.checkAndShow(BaseController.validate.selection, binPattern, 'BIN pattern')) {
       return;
     }
 
     const count = parseInt(this.elements['card-count']?.value || '1');
-    if (!this.validateAndShow(BaseController.quickValidate.numberRange, count, 1, 10000, 'Card count')) {
+    if (!this.checkAndShow(BaseController.validate.numberRange, count, 1, 10000, 'Card count')) {
       return;
     }
 
@@ -94,7 +69,7 @@ class CardsController extends BaseController {
     const cvvLength = this.elements['cvv-length']?.value === "auto" ? null : parseInt(this.elements['cvv-length']?.value);
     const yearsAhead = parseInt(this.elements['years-ahead']?.value || '5');
 
-    await this.safeAsync(async () => {
+    await this.run(async () => {
       const cards = this.cardGenerator.generateBulk(binPattern, count, {
         length, cvvLength, yearsAhead, cardType: cardTypeFromDB,
       });
@@ -103,8 +78,8 @@ class CardsController extends BaseController {
       this.elements['cards-generated'].textContent = `${count} cards`;
       
       const displayType = cardTypeFromDB || cards[0]?.card_type || "UNKNOWN";
-      this.showSuccess(`Generated ${count} ${displayType.toUpperCase()} cards!`);
-    }, 'Failed to generate cards');
+      this.notify('success', `Generated ${count} ${displayType.toUpperCase()} cards!`);
+    }, 'Generating cards...');
   }
 
   renderCards(cards, cardTypeFromDB) {
@@ -186,18 +161,51 @@ class CardsController extends BaseController {
 
   handleSave() {
     const format = this.elements['output-format']?.value || 'card';
-    this.saveContentFromArea('cards-output', format, 'ReysilvaGen-cards');
+    const content = this.getCardsContent(format);
+    if (content) {
+      const filename = `ReysilvaGen-cards-${Date.now()}.${format === 'json' ? 'json' : 'txt'}`;
+      this.downloadFile(content, filename);
+      this.notify('success', 'Cards saved successfully!');
+    }
   }
 
   async handleCopy() {
     const format = this.elements['output-format']?.value || 'card';
-    await this.copyContentFromArea('cards-output', format, 'Cards');
+    this.copyContent('cards-output', format, 'Cards');
   }
 
   handleClear() {
-    this.clearContentArea('cards-output');
+    this.clearContent('cards-output', '<p class="placeholder">Click "Generate Cards" to create card numbers</p>');
     this.elements['cards-generated'].textContent = "0 cards";
     this.elements['cards-output'].className = "cards-display";
+  }
+
+  getCardsContent(format) {
+    const outputDiv = this.elements['cards-output'];
+    const cards = outputDiv.querySelectorAll('.card-item');
+    
+    if (cards.length === 0) {
+      this.notify('error', 'No cards to save');
+      return null;
+    }
+
+    let content = '';
+    cards.forEach((card, index) => {
+      const number = card.dataset.number;
+      const expiry = card.dataset.expiry;
+      const cvv = card.dataset.cvv;
+
+      if (format === 'json') {
+        if (index === 0) content = '[\n';
+        content += `  {"number": "${number}", "expMonth": "${expiry.split('/')[0]}", "expYear": "${expiry.split('/')[1]}", "cvv": "${cvv}"}`;
+        content += index < cards.length - 1 ? ',\n' : '\n';
+        if (index === cards.length - 1) content += ']';
+      } else {
+        content += `${number}|${expiry.replace('/', '|')}|${cvv}\n`;
+      }
+    });
+
+    return content;
   }
 
   handleFormatChange() {
@@ -208,31 +216,41 @@ class CardsController extends BaseController {
       this.handleGenerate(); // Re-render with new format
     }
   }
+
+  /**
+   * Called when route enters
+   */
+  async onRouteEnter() {
+    // Cards tab doesn't need special activation logic
+  }
 }
 
 // Initialize controller (singleton pattern to prevent duplicates)
 async function initCardsTab() {
-  try {
-    // Prevent multiple initialization
-    if (window.cardsController && !window.cardsController.isDestroyed) {
-      console.log('ℹ️ Cards controller already initialized, skipping...');
-      return;
-    }
+  // Prevent multiple initialization - return existing if available
+  if (window.cardsController && !window.cardsController.isDestroyed) {
+    console.log('ℹ️ Cards controller already initialized, returning existing...');
+    return window.cardsController;
+  }
 
+  try {
     // Cleanup existing controller if any
     if (window.cardsController) {
       window.cardsController.destroy();
     }
 
+    console.log('🎮 Creating new Cards controller...');
     const controller = new CardsController();
     await controller.init();
     
     // Store reference for cleanup if needed
     window.cardsController = controller;
     console.log('✅ Cards controller initialized');
+    return controller;
   } catch (error) {
     console.error('❌ Failed to initialize Cards controller:', error);
     window.Utils?.showError('Failed to initialize card generator. Please restart the application.');
+    return null;
   }
 }
 

@@ -23,21 +23,21 @@
   margin-bottom: 0;
   padding: 0;
   background: linear-gradient(135deg, #1a1a1a 0%, #333333 100%);
-  border-radius: 16px;
+  border-radius: 20px;
   transition: all var(--transition);
   overflow: hidden;
-  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.6);
+  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.4), 0 4px 16px rgba(255, 255, 255, 0.1);
   position: relative;
   width: 100%;
-  max-width: 480px;
-  min-height: 280px;
+  max-width: 420px;
+  min-height: 260px;
   height: auto;
-  border: 1px solid var(--color-border);
+  border: 1px solid rgba(255, 255, 255, 0.1);
 }
 
 .card-item:hover {
-  transform: translateY(-4px);
-  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.5);
+  transform: translateY(-6px) scale(1.02);
+  box-shadow: 0 16px 40px rgba(0, 0, 0, 0.6), 0 8px 24px rgba(255, 255, 255, 0.15);
 }
 
 .card-item::before {
@@ -227,18 +227,18 @@
 .cards-display {
   background: var(--color-bg-primary);
   color: var(--color-text-primary);
-  padding: var(--space-8);
+  padding: var(--space-4);
   border-radius: var(--radius);
-  min-height: 400px;
-  max-height: 600px;
+  flex: 1;
   overflow-y: auto;
   font-family: inherit;
-  line-height: 1.8;
+  line-height: 1.6;
   border: 1px solid var(--color-border);
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: var(--space-8);
+  gap: var(--space-5);
+  min-height: 0;
 }
 
 .cards-display.text-format {
@@ -255,9 +255,12 @@
 .cards-display .placeholder {
   color: var(--color-text-muted);
   text-align: center;
-  margin-top: 150px;
+  margin: auto 0;
   font-size: var(--text-base);
-  grid-column: 1 / -1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex: 1;
 }
 
 /* ===== RESPONSIVE CARDS ===== */

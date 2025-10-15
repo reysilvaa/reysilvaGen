@@ -25,47 +25,47 @@ class SidebarView extends BaseView {
         <nav class="nav">
           <button class="nav__item nav__item--active" data-tab="cards">
             <span class="nav__icon">
-              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                 <rect x="3" y="3" width="18" height="18" rx="2"/>
                 <path d="M3 9h18M9 3v18"/>
               </svg>
             </span>
-            Generate Cards
+            <span class="nav__text">Generate Cards</span>
           </button>
           <button class="nav__item" data-tab="address">
             <span class="nav__icon">
-              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                 <path d="M12 2L2 7v10c0 5 10 5 10 5s10 0 10-5V7L12 2z"/>
               </svg>
             </span>
-            Generate Address
+            <span class="nav__text">Generate Address</span>
           </button>
           <button class="nav__item" data-tab="combined">
             <span class="nav__icon">
-              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                 <circle cx="12" cy="12" r="10"/>
                 <path d="M8 12h8M12 8v8"/>
               </svg>
             </span>
-            Combined Mode
+            <span class="nav__text">Combined Mode</span>
           </button>
           <button class="nav__item" data-tab="cursor-reset">
             <span class="nav__icon">
-              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                 <path d="M23 4v6h-6M1 20v-6h6"/>
                 <path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/>
               </svg>
             </span>
-            Cursor Reset
+            <span class="nav__text">Cursor Reset</span>
           </button>
           <button class="nav__item" data-tab="tempmail">
             <span class="nav__icon">
-              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                 <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/>
                 <polyline points="22,6 12,13 2,6"/>
               </svg>
             </span>
-            Temp Mail
+            <span class="nav__text">Temp Mail</span>
           </button>
         </nav>
 

@@ -9,12 +9,12 @@ class AdminLayout extends BaseView {
     super('AdminLayout', { logLevel: 'info' });
     
     this.setTemplate(`
-      <div id="admin-app" style="display: none; width: 100%; height: 100vh">
+      <div id="admin-app" class="app" style="display: none;">
         <div id="admin-login-container">{{loginForm}}</div>
-        <div class="admin-container" id="admin-panel" style="display: none">
+        <div class="admin-container app" id="admin-panel" style="display: none;">
           <div id="admin-sidebar-container">{{sidebar}}</div>
-          <div class="main-container">
-            <main class="main-content" id="admin-main-content">{{content}}</main>
+          <div class="main">
+            <main class="main__content" id="admin-main-content">{{content}}</main>
           </div>
         </div>
         <div id="admin-modals-container">{{modals}}</div>

@@ -41,7 +41,7 @@ class AddressController extends BaseController {
   }
 
   setupEventListeners() {
-    this.addEventListener(this.elements['fetch-address-btn'], 'click', () => {
+    this.addEvent(this.elements['fetch-address-btn'], 'click', () => {
       this.handleFetchAddress();
     });
   }
@@ -59,7 +59,7 @@ class AddressController extends BaseController {
   }
 
   async handleFetchAddress() {
-    await this.safeAsync(async () => {
+    await this.run(async () => {
       const includeName = this.elements['include-name-checkbox']?.checked || false;
       
       const address = this.addressGenerator.generate({ 
@@ -73,7 +73,7 @@ class AddressController extends BaseController {
         ? `Address from real data! (${this.csvLoader.getCount()} available)`
         : "Address generated!";
         
-      this.showSuccess(statusMessage);
+      this.notify('success', statusMessage);
     }, 'Failed to generate address');
   }
 
@@ -120,31 +120,40 @@ class AddressController extends BaseController {
       `;
     }).join('');
   }
+
+  /**
+   * Called when route enters
+   */
+  async onRouteEnter() {
+  }
 }
 
 // Initialize controller (singleton pattern to prevent duplicates)
 async function initAddressTab() {
-  try {
-    // Prevent multiple initialization
-    if (window.addressController && !window.addressController.isDestroyed) {
-      console.log('ℹ️ Address controller already initialized, skipping...');
-      return;
-    }
+  // Prevent multiple initialization - return existing if available
+  if (window.addressController && !window.addressController.isDestroyed) {
+    console.log('ℹ️ Address controller already initialized, returning existing...');
+    return window.addressController;
+  }
 
+  try {
     // Cleanup existing controller if any
     if (window.addressController) {
       window.addressController.destroy();
     }
 
+    console.log('🎮 Creating new Address controller...');
     const controller = new AddressController();
     await controller.init();
     
     // Store reference for cleanup if needed
     window.addressController = controller;
     console.log('✅ Address controller initialized');
+    return controller;
   } catch (error) {
     console.error('❌ Failed to initialize Address controller:', error);
     window.Utils?.showError('Failed to initialize address generator.');
+    return null;
   }
 }
 

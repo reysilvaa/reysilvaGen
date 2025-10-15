@@ -11,17 +11,18 @@
   gap: var(--space-2);
   padding: var(--space-3) var(--space-6);
   border: 1px solid var(--color-border);
-  border-radius: var(--radius);
+  border-radius: var(--radius-md);
   font-size: var(--text-base);
-  font-weight: var(--weight-medium);
+  font-weight: var(--weight-semibold);
   font-family: inherit;
   cursor: pointer;
   transition: all var(--transition);
   position: relative;
   overflow: hidden;
-  background: transparent;
+  background: var(--color-bg-tertiary);
   color: var(--color-text-primary);
   text-decoration: none;
+  box-shadow: var(--shadow-sm);
 }
 
 /* Button Ripple Effect */
@@ -52,7 +53,8 @@
 .btn:hover {
   transform: translateY(-2px);
   border-color: var(--color-accent);
-  box-shadow: var(--shadow-sm);
+  box-shadow: var(--shadow);
+  background: var(--color-bg-hover);
 }
 
 .btn:active {
@@ -67,15 +69,17 @@
 
 /* ===== BUTTON VARIANTS ===== */
 .btn--primary {
-  background: var(--color-accent);
+  background: linear-gradient(135deg, var(--color-accent) 0%, var(--color-accent-hover) 100%);
   color: var(--color-bg-primary);
   border-color: var(--color-accent);
-  font-weight: var(--weight-semibold);
+  font-weight: var(--weight-bold);
+  box-shadow: 0 4px 12px rgba(255, 255, 255, 0.2);
 }
 
 .btn--primary:hover {
-  background: var(--color-accent-hover);
-  box-shadow: 0 4px 16px rgba(255, 255, 255, 0.3);
+  background: linear-gradient(135deg, var(--color-accent-hover) 0%, var(--color-accent) 100%);
+  box-shadow: 0 6px 20px rgba(255, 255, 255, 0.4);
+  transform: translateY(-3px);
 }
 
 .btn--secondary {
@@ -118,9 +122,10 @@
 }
 
 .btn--lg {
-  padding: var(--space-4) var(--space-8);
-  font-size: var(--text-lg);
+  padding: var(--space-3) var(--space-6);
+  font-size: var(--text-base);
   font-weight: var(--weight-semibold);
+  min-height: 40px;
 }
 
 .btn--icon {
@@ -208,7 +213,8 @@
 .action-buttons-grid {
   display: grid;
   grid-template-columns: 1fr 1fr;
-  gap: var(--space-2);
+  gap: var(--space-3);
+  margin-top: var(--space-3);
 }
 
 .action-buttons-grid .btn {

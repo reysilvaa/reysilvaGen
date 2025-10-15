@@ -6,7 +6,7 @@
 
 class SplashController extends BaseController {
   constructor() {
-    super('Splash', { logLevel: 'info', autoInit: false });
+    super('Splash', { autoInit: false });
     this.currentProgress = 0;
     this.targetProgress = 0;
     this.realProgressReceived = false;
@@ -48,6 +48,7 @@ class SplashController extends BaseController {
     } else {
       this.log('warn', 'SplashAPI not available, using simulation only');
     }
+
   }
 
   updateProgress(progress, status) {
@@ -169,6 +170,7 @@ class SplashController extends BaseController {
     this.updateProgress(100, 'Ready!');
     setTimeout(() => this.onInitializationComplete(), 300);
   }
+
 
   onDestroy() {
     if (this.animationFrame) {

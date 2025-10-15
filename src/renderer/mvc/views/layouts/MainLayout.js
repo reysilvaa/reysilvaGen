@@ -9,10 +9,10 @@ class MainLayout extends BaseView {
     super('MainLayout', { logLevel: 'info' });
     
     this.setTemplate(`
-      <div id="main-app" style="display: none; width: 100%; height: 100vh">
+      <div id="main-app" class="app" style="display: none;">
         <div id="sidebar-container">{{sidebar}}</div>
-        <div class="main-container">
-          <main class="main-content" id="main-content-container">{{content}}</main>
+        <div class="main">
+          <main class="main__content" id="main-content-container">{{content}}</main>
           <div id="footer-container">{{footer}}</div>
         </div>
       </div>

@@ -34,15 +34,51 @@
 
 /* ===== PANEL VARIANTS ===== */
 .settings-panel,
-.info-panel,
-.output-panel {
+.info-panel {
   background: var(--color-bg-secondary);
-  border-radius: var(--radius-md);
-  padding: var(--space-8);
+  border-radius: var(--radius-lg);
+  padding: var(--space-6);
   border: 1px solid var(--color-border);
   overflow-y: auto;
   box-shadow: var(--shadow-sm);
-  transition: border-color var(--transition);
+  transition: all var(--transition);
+  position: relative;
+}
+
+.settings-panel::before,
+.info-panel::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, var(--color-accent-alpha), transparent);
+  opacity: 0.6;
+}
+
+.output-panel {
+  background: var(--color-bg-secondary);
+  border-radius: var(--radius-lg);
+  padding: var(--space-5);
+  border: 1px solid var(--color-border);
+  overflow: hidden;
+  box-shadow: var(--shadow-sm);
+  transition: all var(--transition);
+  display: flex;
+  flex-direction: column;
+  position: relative;
+}
+
+.output-panel::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, var(--color-success-alpha), transparent);
+  opacity: 0.6;
 }
 
 .settings-panel:hover,

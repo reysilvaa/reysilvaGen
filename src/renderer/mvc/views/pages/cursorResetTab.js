@@ -3,16 +3,15 @@ const CursorResetTab = {
     return `
       <div class="tab-content" id="cursor-reset-tab">
         <div class="page-header">
-          <h2>
+          <h2 class="page__title">
             <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align: middle; margin-right: 8px;">
               <path d="M23 4v6h-6M1 20v-6h6"/>
               <path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/>
             </svg>
             Cursor VIP Reset Tool
           </h2>
-          <p>
-            Reset Cursor Machine ID untuk bypass trial limit. Based on
-            Reysilva's Python script.
+          <p class="page__description">
+            Reset Cursor Machine ID untuk bypass trial limit. Based on Reysilva's Python script with enhanced UI.
           </p>
         </div>
 

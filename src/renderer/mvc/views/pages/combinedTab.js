@@ -3,10 +3,15 @@ const CombinedTab = {
     return `
       <div class="tab-content" id="combined-tab">
         <div class="page-header">
-          <h2>Combined Mode</h2>
-          <p>
-            Generate cards with complete person information and real
-            address in one click. Perfect for complete data generation.
+          <h2 class="page__title">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align: middle; margin-right: 8px;">
+              <circle cx="12" cy="12" r="10"/>
+              <path d="M8 12h8M12 8v8"/>
+            </svg>
+            Combined Mode
+          </h2>
+          <p class="page__description">
+            Generate cards with complete person information and real address in one click. Perfect for complete data generation.
           </p>
         </div>
 

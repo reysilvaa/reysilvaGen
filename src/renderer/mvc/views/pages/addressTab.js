@@ -3,10 +3,14 @@ const AddressTab = {
     return `
       <div class="tab-content" id="address-tab">
         <div class="page-header">
-          <h2>Generate US Address</h2>
-          <p>
-            Generate random US addresses from real data (197k+ addresses).
-            100% offline, no internet needed.
+          <h2 class="page__title">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align: middle; margin-right: 8px;">
+              <path d="M12 2L2 7v10c0 5 10 5 10 5s10 0 10-5V7L12 2z"/>
+            </svg>
+            Generate US Address
+          </h2>
+          <p class="page__description">
+            Generate random US addresses from real data (197k+ addresses). 100% offline, no internet needed.
           </p>
         </div>
 

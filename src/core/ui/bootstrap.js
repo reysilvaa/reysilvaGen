@@ -33,6 +33,7 @@
         // Core utilities first
         "../core/ui/dom.js",
         "../core/ui/dialog.js",
+        "../core/ui/route.js",
         
         // Base classes (load order matters!)
         "mvc/models/BaseModel.js",

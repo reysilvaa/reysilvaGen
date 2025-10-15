@@ -284,45 +284,61 @@
     });
   }
 
-  // ============= Navigation =============
-  function switchTab(tabName) {
-    // Hide all tabs
-    document.querySelectorAll('.tab-content').forEach(tab => {
-      tab.classList.remove('tab-content--active');
-    });
-    
-    // Show selected tab
-    const targetTab = document.getElementById(`${tabName}-tab`);
-    if (targetTab) {
-      targetTab.classList.add('tab-content--active');
-      console.log(`📄 Switched to ${tabName} tab`);
+  // ============= Navigation & Routing =============
+  function setupRoutes() {
+    if (!window.TabRouter) {
+      console.error('❌ TabRouter not available');
+      return;
     }
+
+    // Register all routes with their controllers
+    window.TabRouter.register('cards', {
+      title: 'Generate Cards',
+      controller: window.CardsController,
+      onEnter: () => console.log('📄 Entered Cards tab'),
+      onLeave: () => console.log('📄 Left Cards tab')
+    });
+
+    window.TabRouter.register('address', {
+      title: 'Generate Address', 
+      controller: window.AddressController,
+      onEnter: () => console.log('📄 Entered Address tab'),
+      onLeave: () => console.log('📄 Left Address tab')
+    });
+
+    window.TabRouter.register('combined', {
+      title: 'Combined Mode',
+      controller: window.CombinedController,
+      onEnter: () => console.log('📄 Entered Combined tab'),
+      onLeave: () => console.log('📄 Left Combined tab')
+    });
+
+    window.TabRouter.register('cursor-reset', {
+      title: 'Cursor Reset',
+      controller: window.CursorController,
+      onEnter: () => console.log('📄 Entered Cursor Reset tab'),
+      onLeave: () => console.log('📄 Left Cursor Reset tab')
+    });
+
+    window.TabRouter.register('tempmail', {
+      title: 'Temp Mail',
+      controller: window.TempmailInit,
+      onEnter: () => console.log('📄 Entered Tempmail tab'),
+      onLeave: () => console.log('📄 Left Tempmail tab')
+    });
+
+    console.log('🛣️ All routes registered');
   }
 
   function initNavigation() {
-    const navItems = document.querySelectorAll(".nav__item");
-
-    navItems.forEach((item) => {
-      item.addEventListener("click", () => {
-        const tabName = item.getAttribute("data-tab");
-        
-        // Remove active class from all nav items
-        navItems.forEach((nav) => nav.classList.remove("nav__item--active"));
-        
-        // Add active class to clicked item
-        item.classList.add("nav__item--active");
-        
-        // Switch to the selected tab
-        switchTab(tabName);
-      });
-    });
-
-    // Set default tab (cards) as active
-    const defaultTab = document.querySelector('[data-tab="cards"]');
-    if (defaultTab) {
-      defaultTab.classList.add('nav__item--active');
-      switchTab('cards');
-    }
+    // Setup routes first
+    setupRoutes();
+    
+    // Setup navigation listeners through router
+    window.TabRouter.setupNavigation();
+    
+    // Navigate to default route
+    window.TabRouter.navigateToDefault();
 
     // Admin shortcut
     document.addEventListener("keydown", (e) => {
@@ -331,6 +347,25 @@
         window.goToAdmin();
       }
     });
+  }
+
+  // Legacy function for backward compatibility
+  async function switchTab(tabName) {
+    if (window.TabRouter) {
+      await window.TabRouter.navigate(tabName);
+    } else {
+      console.warn('⚠️ TabRouter not available, using fallback');
+      // Simple fallback method
+      document.querySelectorAll('.tab-content').forEach(tab => {
+        tab.classList.remove('tab-content--active');
+      });
+      
+      const targetTab = document.getElementById(`${tabName}-tab`);
+      if (targetTab) {
+        targetTab.classList.add('tab-content--active');
+        console.log(`📄 Switched to ${tabName} tab`);
+      }
+    }
   }
 
   // ============= Version Display =============
@@ -397,6 +432,12 @@
     try {
       console.log("🚀 Initializing app...");
 
+      // Initialize loading manager first
+      if (window.LoadingManager) {
+        window.LoadingManager.init();
+        console.log("✅ Loading manager initialized");
+      }
+
       // Render UI components first
       renderComponents();
 
@@ -404,12 +445,6 @@
       await loadBins();
       await loadAppVersion();
 
-      // Initialize all controllers
-      window.CardsController?.init();
-      window.AddressController?.init();
-      window.CombinedController?.init();
-      window.CursorController?.init();
-      window.TempmailInit?.init();
       
       // Setup navigation and auto-updater
       initNavigation();
