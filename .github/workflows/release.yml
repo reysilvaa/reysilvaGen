@@ -3,14 +3,14 @@ name: Build & Release
 on:
   push:
     tags:
-      - 'v*'
-      - '*.*.*'
+      - "v*"
+      - "*.*.*"
   workflow_dispatch:
     inputs:
       platform:
-        description: 'Platform to build'
+        description: "Platform to build"
         required: true
-        default: 'windows'
+        default: "windows"
         type: choice
         options:
           - windows
@@ -20,6 +20,7 @@ on:
 
 env:
   CSC_IDENTITY_AUTO_DISCOVERY: false
+  NODE_VERSION: "20"
 
 jobs:
   # ============================================
@@ -33,25 +34,28 @@ jobs:
     if: |
       (github.event_name == 'push' && startsWith(github.ref, 'refs/tags/')) ||
       (github.event_name == 'workflow_dispatch' && (github.event.inputs.platform == 'windows' || github.event.inputs.platform == 'all'))
-    
+
     steps:
       - name: 📥 Checkout Code
         uses: actions/checkout@v4
-      
+
       - name: 🟢 Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: '20'
-          cache: 'npm'
-      
+          node-version: ${{ env.NODE_VERSION }}
+          cache: "npm"
+
       - name: 📦 Install Dependencies
         run: npm ci
-      
-      - name: 🔨 Build Electron App
+
+      - name: 🧹 Clean Previous Build
+        run: npm run clean
+
+      - name: 🔨 Minify & Build Electron App
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: npm run build
-      
+
       - name: 📤 Upload Build Artifacts
         uses: actions/upload-artifact@v4
         with:
@@ -60,9 +64,13 @@ jobs:
             dist/*.exe
             dist/latest.yml
           retention-days: 7
-      
+
       - name: 📋 List Build Output
-        run: dir dist
+        run: |
+          echo "=== Build Output ==="
+          dir dist
+          echo "=== File Sizes ==="
+          for %f in (dist\*.exe) do echo %~nxf: %~zf bytes
 
   # ============================================
   # macOS Build
@@ -75,25 +83,35 @@ jobs:
     if: |
       (github.event_name == 'push' && startsWith(github.ref, 'refs/tags/')) ||
       (github.event_name == 'workflow_dispatch' && (github.event.inputs.platform == 'macos' || github.event.inputs.platform == 'all'))
-    
+
     steps:
       - name: 📥 Checkout Code
         uses: actions/checkout@v4
-      
+
       - name: 🟢 Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: '20'
-          cache: 'npm'
-      
+          node-version: ${{ env.NODE_VERSION }}
+          cache: "npm"
+
       - name: 📦 Install Dependencies
         run: npm ci
-      
-      - name: 🔨 Build Electron App
+
+      - name: 🧹 Clean Previous Build
+        run: npm run clean
+
+      - name: 🔨 Minify & Build Electron App
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: npm run build:mac
-      
+
+      - name: 📋 List Build Output
+        run: |
+          echo "=== Build Output ==="
+          ls -la dist/
+          echo "=== File Sizes ==="
+          ls -lah dist/*.dmg dist/*.zip 2>/dev/null || echo "No DMG/ZIP files found"
+
       - name: 📤 Upload Build Artifacts
         uses: actions/upload-artifact@v4
         with:
@@ -115,25 +133,35 @@ jobs:
     if: |
       (github.event_name == 'push' && startsWith(github.ref, 'refs/tags/')) ||
       (github.event_name == 'workflow_dispatch' && (github.event.inputs.platform == 'linux' || github.event.inputs.platform == 'all'))
-    
+
     steps:
       - name: 📥 Checkout Code
         uses: actions/checkout@v4
-      
+
       - name: 🟢 Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: '20'
-          cache: 'npm'
-      
+          node-version: ${{ env.NODE_VERSION }}
+          cache: "npm"
+
       - name: 📦 Install Dependencies
         run: npm ci
-      
-      - name: 🔨 Build Electron App
+
+      - name: 🧹 Clean Previous Build
+        run: npm run clean
+
+      - name: 🔨 Minify & Build Electron App
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: npm run build:linux
-      
+
+      - name: 📋 List Build Output
+        run: |
+          echo "=== Build Output ==="
+          ls -la dist/
+          echo "=== File Sizes ==="
+          ls -lah dist/*.AppImage dist/*.tar.gz dist/*.deb dist/*.rpm 2>/dev/null || echo "No build files found"
+
       - name: 📤 Upload Build Artifacts
         uses: actions/upload-artifact@v4
         with:
@@ -141,6 +169,8 @@ jobs:
           path: |
             dist/*.AppImage
             dist/*.tar.gz
+            dist/*.deb
+            dist/*.rpm
             dist/latest-linux.yml
           retention-days: 7
 
@@ -154,31 +184,31 @@ jobs:
     permissions:
       contents: write
     if: github.event_name == 'push' && startsWith(github.ref, 'refs/tags/')
-    
+
     steps:
       - name: 📥 Download Windows Artifacts
         uses: actions/download-artifact@v4
         with:
           name: windows-installer
           path: release-files
-      
+
       - name: 📥 Download macOS Artifacts
         uses: actions/download-artifact@v4
         with:
           name: macos-installer
           path: release-files
         continue-on-error: true
-      
+
       - name: 📥 Download Linux Artifacts
         uses: actions/download-artifact@v4
         with:
           name: linux-installer
           path: release-files
         continue-on-error: true
-      
+
       - name: 📋 List Release Files
         run: ls -lah release-files/
-      
+
       - name: 🚀 Create GitHub Release
         uses: softprops/action-gh-release@v1
         with:
@@ -187,74 +217,30 @@ jobs:
           prerelease: false
           generate_release_notes: true
           body: |
-            ## 📦 Downloads by Platform
-            
+            ## 📦 Downloads
+
             ### 🪟 Windows
-            **Installer (Recommended):**
-            - `reysilvaGen-Setup-*.exe` - NSIS Installer with auto-update
-            
-            **Portable:**
-            - `reysilvaGen-*-Portable.exe` - No installation required
-            
-            **Auto-Update:**
-            - `latest.yml` - Auto-update manifest
-            
-            ---
-            
-            ### 🍎 macOS
-            **Installer (DMG):**
-            - `reysilvaGen-*-mac-x64.dmg` - Intel Macs (x64)
+            - `reysilvaGen-Setup-*.exe` - NSIS Installer (Recommended)
+            - `reysilvaGen-*-Portable.exe` - Portable version
+
+            ### 🍎 macOS  
+            - `reysilvaGen-*-mac-x64.dmg` - Intel Macs
             - `reysilvaGen-*-mac-arm64.dmg` - Apple Silicon (M1/M2/M3)
-            
-            **Portable (ZIP):**
-            - `reysilvaGen-*-mac-x64.zip` - Intel Macs
-            - `reysilvaGen-*-mac-arm64.zip` - Apple Silicon
-            
-            **Auto-Update:**
-            - `latest-mac.yml` - Auto-update manifest
-            
-            ---
-            
+
             ### 🐧 Linux
-            **AppImage (Universal):**
-            - `reysilvaGen-*-linux-x64.AppImage` - Works on all distros
-            
-            **Package Managers:**
-            - `reysilvaGen-*-linux-x64.deb` - Debian/Ubuntu/Mint
-            - `reysilvaGen-*-linux-x64.rpm` - Fedora/RHEL/CentOS
-            
-            **Portable:**
-            - `reysilvaGen-*-linux-x64.tar.gz` - Generic tarball
-            
-            **Auto-Update:**
-            - `latest-linux.yml` - Auto-update manifest
-            
+            - `reysilvaGen-*-linux-x64.AppImage` - Universal AppImage
+            - `reysilvaGen-*-linux-x64.deb` - Debian/Ubuntu package
+            - `reysilvaGen-*-linux-x64.rpm` - Fedora/RHEL package
+
             ---
-            
+
             ## 🔄 Auto-Update
-            
-            All installer versions support automatic updates. The app will check for new versions and download them in the background.
-            
-            ---
-            
-            ## ⚠️ Platform-Specific Notes
-            
-            ### Windows
-            - **SmartScreen Warning:** App is unsigned, you may see a warning
-              1. Click **"More info"**
-              2. Click **"Run anyway"**
-            
-            ### macOS
-            - **Gatekeeper Warning:** App is unsigned
-              1. Right-click the app → **Open**
-              2. Click **"Open"** in the dialog
-              - Or: System Preferences → Security & Privacy → **"Open Anyway"**
-            
-            ### Linux
-            - **AppImage:** Make executable with `chmod +x reysilvaGen-*.AppImage` then run
-            - **DEB:** Install with `sudo dpkg -i reysilvaGen-*.deb` or double-click
-            - **RPM:** Install with `sudo rpm -i reysilvaGen-*.rpm` or double-click
-            - **TAR.GZ:** Extract and run the binary inside
+            All installer versions support automatic updates.
+
+            ## ⚠️ Installation Notes
+            - **Windows:** May show SmartScreen warning - click "More info" → "Run anyway"
+            - **macOS:** Right-click app → "Open" to bypass Gatekeeper
+            - **Linux:** Make AppImage executable with `chmod +x`
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
@@ -267,22 +253,24 @@ jobs:
     permissions:
       contents: write
     if: github.event_name == 'workflow_dispatch' && github.event.inputs.platform == 'windows'
-    
+
     steps:
       - name: 📥 Checkout Code
         uses: actions/checkout@v4
-      
+
       - name: 🟢 Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: '20'
-          cache: 'npm'
-      
+          node-version: ${{ env.NODE_VERSION }}
+          cache: "npm"
+
       - name: 📦 Install Dependencies
         run: npm ci
-      
-      - name: 🚀 Build & Publish
+
+      - name: 🧹 Clean Previous Build
+        run: npm run clean
+
+      - name: 🚀 Minify, Build & Publish
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: npm run publish
-
