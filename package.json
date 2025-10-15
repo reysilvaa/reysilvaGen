@@ -2,18 +2,21 @@
   "name": "reysilvagen-desktop",
   "version": "2.0.7",
   "description": "Modern Test Card Generator & Address Fetcher with Admin Panel - Built with Electron",
-  "main": "src/main/main.js",
+  "main": "dist/main/main.js",
   "productName": "reysilvaGen",
   "scripts": {
     "start": "electron .",
-    "dev": "electron . --dev",
+    "dev": "electron src/main/main.js --dev",
     "clean": "rimraf dist",
+    "minify": "node scripts/build-minify.js",
+    "prebuild": "npm run minify",
     "build": "set CSC_IDENTITY_AUTO_DISCOVERY=false && electron-builder --win --x64",
     "build:installer": "set CSC_IDENTITY_AUTO_DISCOVERY=false && electron-builder --win --x64 --config.win.target=nsis",
     "build:portable": "set CSC_IDENTITY_AUTO_DISCOVERY=false && electron-builder --win --x64 --config.win.target=portable",
     "build:all": "set CSC_IDENTITY_AUTO_DISCOVERY=false && electron-builder --win --mac --linux",
     "build:mac": "electron-builder --mac",
     "build:linux": "electron-builder --linux",
+    "build:dev": "npm run minify && electron dist/main/main.js --dev",
     "publish": "set CSC_IDENTITY_AUTO_DISCOVERY=false && electron-builder --win --mac --linux --publish always"
   },
   "keywords": [
@@ -29,13 +32,14 @@
     "electron-builder": "^24.9.1",
     "electron-rebuild": "^3.2.9",
     "electron-reload": "^2.0.0-alpha.1",
-    "rimraf": "^5.0.10"
+    "rimraf": "^5.0.10",
+    "terser": "^5.44.0"
   },
   "dependencies": {
     "axios": "^1.6.2",
     "electron-updater": "^6.1.7",
-    "smart-buffer": "^4.2.0",
-    "puppeteer": "^24.15.0"
+    "puppeteer": "^24.15.0",
+    "smart-buffer": "^4.2.0"
   },
   "repository": {
     "type": "git",
@@ -45,10 +49,10 @@
     "appId": "com.reysilvaa.reysilvagen",
     "productName": "reysilvaGen",
     "directories": {
-      "output": "dist"
+      "output": "release"
     },
     "files": [
-      "src/**/*",
+      "dist/**/*",
       "assets/**/*",
       "node_modules/**/*",
       "package.json"

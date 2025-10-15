@@ -199,7 +199,55 @@ function isValidIntegerRange(value, min, max) {
   return value >= min && value <= max;
 }
 
+// ==================== RESPONSE HELPERS ====================
+
+/**
+ * Create standardized error response
+ * @param {string} message - Error message
+ * @param {Error|string} error - Original error object or additional message
+ * @param {Object} data - Additional error data
+ * @returns {Object} Standardized error response
+ */
+function createErrorResponse(message, error = null, data = {}) {
+  return {
+    success: false,
+    message: error ? (error.message || error) : message,
+    ...data
+  };
+}
+
+/**
+ * Create standardized success response
+ * @param {string} message - Success message
+ * @param {Object} data - Additional success data
+ * @returns {Object} Standardized success response
+ */
+function createSuccessResponse(message, data = {}) {
+  return {
+    success: true,
+    message,
+    ...data
+  };
+}
+
+/**
+ * Create validation result response
+ * @param {boolean} isValid - Whether validation passed
+ * @param {string} message - Validation message
+ * @param {Object} data - Additional validation data
+ * @returns {Object} Validation response
+ */
+function createValidationResponse(isValid, message, data = {}) {
+  return {
+    isValid,
+    success: isValid,
+    message,
+    ...data
+  };
+}
+
 module.exports = {
+  // Validation functions
   isValidEmail,
   isValidBinPattern,
   isValidCardNumber,
@@ -208,6 +256,11 @@ module.exports = {
   validatePassword,
   sanitizeString,
   isValidDateRange,
-  isValidIntegerRange
+  isValidIntegerRange,
+  
+  // Response helpers
+  createErrorResponse,
+  createSuccessResponse,
+  createValidationResponse
 };
 
