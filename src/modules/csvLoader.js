@@ -70,7 +70,6 @@ class CSVLoader {
    */
   async load(filename) {
     try {
-      // Use IPC to load CSV from main process
       const result = await window.csvLoader.loadCSV(filename);
       
       if (!result.success) {
@@ -80,10 +79,10 @@ class CSVLoader {
       this.addresses = this.parseCSV(result.data);
       this.loaded = true;
 
-      console.log(`Loaded ${this.addresses.length} addresses from CSV`);
+      console.log(`✅ Loaded ${this.addresses.length} addresses from CSV`);
       return this.addresses;
     } catch (error) {
-      console.error("Error loading CSV:", error);
+      console.error("❌ CSV load failed:", error.message);
       this.loaded = false;
       return [];
     }

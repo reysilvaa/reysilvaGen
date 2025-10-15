@@ -74,7 +74,7 @@ const TempmailTab = {
               </h3>
               
               <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 16px;">
-                <button class="btn btn-primary btn-large" id="new-email-btn">
+                <button class="btn btn--primary btn--lg" id="new-email-btn">
                   <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="margin-right: 6px;">
                     <rect x="3" y="3" width="18" height="18" rx="2" ry="2"/>
                     <line x1="12" y1="8" x2="12" y2="16"/>
@@ -82,7 +82,7 @@ const TempmailTab = {
                   </svg>
                   New
                 </button>
-                <button class="btn btn-secondary btn-large" id="random-email-btn">
+                <button class="btn btn--secondary btn--lg" id="random-email-btn">
                   <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="margin-right: 6px;">
                     <path d="M21.5 2v6h-6M2.5 22v-6h6M2 11.5a10 10 0 0 1 18.8-4.3M22 12.5a10 10 0 0 1-18.8 4.2"/>
                   </svg>
@@ -98,7 +98,7 @@ const TempmailTab = {
                 Delete Email
               </h3>
 
-              <button class="btn btn-danger btn-large" id="delete-email-btn" disabled title="Delete current email" style="width: 100%;">
+              <button class="btn btn--danger btn--lg" id="delete-email-btn" disabled title="Delete current email" style="width: 100%;">
                 <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="margin-right: 6px;">
                   <polyline points="3 6 5 6 21 6"/>
                   <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/>
@@ -204,7 +204,7 @@ const TempmailTab = {
                 </div>
               </div>
 
-              <button id="create-email-btn" class="btn btn-primary btn-large" style="width: 100%;">
+              <button id="create-email-btn" class="btn btn--primary btn--lg" style="width: 100%;">
                 <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="margin-right: 8px;">
                   <polyline points="9 11 12 14 22 4"/>
                   <path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/>

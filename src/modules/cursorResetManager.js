@@ -70,7 +70,7 @@ class CursorResetManager {
       await execAsync('taskkill /F /IM Cursor.exe');
 
       // Wait for process to fully close
-      await new Promise((resolve) => setTimeout(resolve, TIMING.CURSOR_CLOSE_DELAY));
+      await new Promise((resolve) => setTimeout(resolve, TIMING.cursor.closeDelay));
 
       this.logger.success('Cursor closed successfully');
       return true;

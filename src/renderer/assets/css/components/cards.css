@@ -1,0 +1,283 @@
+/* ========================================
+   CARD COMPONENTS
+   All card styles including credit cards and content cards
+   ======================================== */
+
+/* ===== BASE CARD ===== */
+.card {
+  background: var(--color-bg-secondary);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  padding: var(--space-6);
+  box-shadow: var(--shadow-sm);
+  transition: all var(--transition);
+}
+
+.card:hover {
+  border-color: var(--color-border-light);
+  box-shadow: var(--shadow);
+}
+
+/* ===== CREDIT CARD VISUAL ===== */
+.card-item {
+  margin-bottom: 0;
+  padding: 0;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  border-radius: 16px;
+  transition: all var(--transition);
+  overflow: hidden;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
+  position: relative;
+  width: 100%;
+  max-width: 480px;
+  min-height: 280px;
+  height: auto;
+}
+
+.card-item:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.5);
+}
+
+.card-item::before {
+  content: "";
+  position: absolute;
+  top: -50%;
+  right: -50%;
+  width: 200%;
+  height: 200%;
+  background: radial-gradient(circle, rgba(255, 255, 255, 0.1) 0%, transparent 70%);
+  pointer-events: none;
+}
+
+.card-inner {
+  padding: 26px;
+  min-height: 280px;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  position: relative;
+  z-index: 1;
+}
+
+/* ===== CARD HEADER ===== */
+.card-item-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  margin-bottom: var(--space-2);
+}
+
+.card-item-number {
+  color: rgba(255, 255, 255, 0.7);
+  font-size: 10px;
+  font-weight: var(--weight-semibold);
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+}
+
+.card-logo {
+  background: rgba(255, 255, 255, 0.95);
+  padding: 4px 12px;
+  border-radius: var(--radius);
+  font-size: 11px;
+  font-weight: var(--weight-bold);
+  color: #667eea;
+  letter-spacing: 0.05em;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+}
+
+/* ===== CARD CHIP ===== */
+.card-chip {
+  width: 50px;
+  height: 38px;
+  background: linear-gradient(135deg, #ffd89b 0%, #f9d470 100%);
+  border-radius: var(--radius-md);
+  margin-bottom: var(--space-4);
+  position: relative;
+  overflow: hidden;
+  box-shadow: inset 0 2px 6px rgba(0, 0, 0, 0.25);
+}
+
+.card-chip::before {
+  content: "";
+  position: absolute;
+  top: var(--space-2);
+  left: var(--space-2);
+  right: var(--space-2);
+  bottom: var(--space-2);
+  border: 1px solid rgba(0, 0, 0, 0.1);
+  border-radius: 3px;
+}
+
+/* ===== CARD NUMBER ===== */
+.card-number-display {
+  margin: var(--space-2) 0 var(--space-4) 0;
+  cursor: pointer;
+  transition: all var(--transition-fast);
+  padding: var(--space-2) 0;
+  border-radius: var(--radius);
+}
+
+.card-number-display:hover {
+  background: rgba(255, 255, 255, 0.1);
+}
+
+.card-number-label {
+  font-size: 9px;
+  color: rgba(255, 255, 255, 0.6);
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  margin-bottom: 4px;
+}
+
+.card-number-value {
+  font-size: 20px;
+  font-family: var(--font-mono);
+  color: white;
+  letter-spacing: 0.08em;
+  font-weight: var(--weight-medium);
+  word-spacing: 10px;
+}
+
+/* ===== CARD DETAILS ===== */
+.card-details {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-end;
+  gap: var(--space-3);
+  margin-top: 0;
+}
+
+.card-detail-item {
+  cursor: pointer;
+  transition: all var(--transition-fast);
+  padding: var(--space-1) var(--space-2);
+  border-radius: var(--radius);
+  flex-shrink: 0;
+}
+
+.card-detail-item:hover {
+  background: rgba(255, 255, 255, 0.1);
+}
+
+.card-detail-label {
+  font-size: 8px;
+  color: rgba(255, 255, 255, 0.6);
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  margin-bottom: 2px;
+}
+
+.card-detail-value {
+  font-size: 15px;
+  color: white;
+  font-weight: var(--weight-semibold);
+  letter-spacing: 0.05em;
+}
+
+/* ===== CARD NAME ===== */
+.card-name-display {
+  cursor: pointer;
+  transition: all var(--transition-fast);
+  padding: var(--space-1) var(--space-2);
+  border-radius: var(--radius);
+  flex: 1;
+  min-width: 0;
+}
+
+.card-name-display:hover {
+  background: rgba(255, 255, 255, 0.1);
+}
+
+.card-name-value {
+  font-size: 12px;
+  color: white;
+  font-weight: var(--weight-bold);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* ===== CARD VARIANTS ===== */
+.card-item.card-visa {
+  background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
+}
+
+.card-item.card-mastercard {
+  background: linear-gradient(135deg, #eb3349 0%, #f45c43 100%);
+}
+
+.card-item.card-amex {
+  background: linear-gradient(135deg, #0f2027 0%, #203a43 50%, #2c5364 100%);
+}
+
+.card-item.card-discover {
+  background: linear-gradient(135deg, #ff6a00 0%, #ee0979 100%);
+}
+
+.card-item.card-other {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+}
+
+/* ===== CARDS DISPLAY ===== */
+.cards-display {
+  background: var(--color-bg-primary);
+  color: var(--color-text-primary);
+  padding: var(--space-8);
+  border-radius: var(--radius);
+  min-height: 400px;
+  max-height: 600px;
+  overflow-y: auto;
+  font-family: inherit;
+  line-height: 1.8;
+  border: 1px solid var(--color-border);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-8);
+}
+
+.cards-display.text-format {
+  align-items: flex-start;
+  padding: var(--space-5);
+}
+
+.cards-display.text-format pre {
+  width: 100%;
+  user-select: text;
+  -webkit-user-select: text;
+}
+
+.cards-display .placeholder {
+  color: var(--color-text-muted);
+  text-align: center;
+  margin-top: 150px;
+  font-size: var(--text-base);
+  grid-column: 1 / -1;
+}
+
+/* ===== RESPONSIVE CARDS ===== */
+@media (max-width: 768px) {
+  .card-item {
+    max-width: 100%;
+  }
+  
+  .card-number-value {
+    font-size: 18px;
+    word-spacing: 8px;
+  }
+  
+  .card-inner {
+    padding: 20px;
+  }
+}
+
+@media (max-width: 480px) {
+  .cards-display {
+    padding: var(--space-3);
+  }
+}
+

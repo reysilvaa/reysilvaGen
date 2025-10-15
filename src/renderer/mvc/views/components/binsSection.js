@@ -7,7 +7,7 @@ const BinsSection = {
           <p>Manage BIN patterns for card generation.</p>
         </div>
         <div class="admin-actions">
-          <button class="btn btn-primary" id="add-bin-btn">
+          <button class="btn btn--primary" id="add-bin-btn">
             <svg
               width="16"
               height="16"
@@ -23,7 +23,7 @@ const BinsSection = {
             </svg>
             Add New BIN
           </button>
-          <button class="btn btn-secondary" id="refresh-bins-btn">
+          <button class="btn btn--secondary" id="refresh-bins-btn">
             <svg
               width="16"
               height="16"

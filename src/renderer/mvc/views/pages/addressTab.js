@@ -32,7 +32,7 @@ const AddressTab = {
               </label>
             </div>
 
-            <button class="btn btn-primary btn-large" id="fetch-address-btn">
+            <button class="btn btn--primary btn--lg" id="fetch-address-btn">
               <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align: middle; margin-right: 6px;">
                 <path d="M12 2L2 7v10c0 5 10 5 10 5s10 0 10-5V7L12 2z"/>
               </svg>

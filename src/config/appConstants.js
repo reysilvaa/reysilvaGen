@@ -7,22 +7,23 @@
 
 const path = require("path");
 
-// Window dimensions and UI configuration
-const WINDOW = {
-  main: {
-    width: 1200,
-    height: 800,
-    minWidth: 900,
-    minHeight: 700,
+// UI Configuration - Consolidated window settings
+const UI = {
+  window: {
+    main: { width: 1200, height: 800, minWidth: 900, minHeight: 700 },
+    splash: { width: 550, height: 400 },
+    admin: { width: 1200, height: 800 },
+    tempmail: { width: 1200, height: 800 }, // Moved from BROWSER_WINDOW
     backgroundColor: '#0a0a0a'
   },
-  splash: {
-    width: 550,
-    height: 400
+  zIndex: {
+    modal: 100000,
+    notification: 10001,
+    overlay: 10000
   },
-  admin: {
-    width: 1200,
-    height: 800
+  animation: {
+    duration: 300,
+    slideIn: 'slideIn 0.3s ease'
   }
 };
 
@@ -46,17 +47,29 @@ const WEB_PREFERENCES = {
   }
 };
 
-// Timing constants (in milliseconds)
+// Timing constants (in milliseconds) - Organized by category
 const TIMING = {
-  SPLASH_DURATION: 1800,
-  TEMPMAIL_LOAD_DELAY: 2500,
-  TEMPMAIL_FORM_DELAY: 1800,
-  TEMPMAIL_ACTION_DELAY: 400,
-  TEMPMAIL_CREATE_DELAY: 1500,
-  TEMPMAIL_RELOAD_DELAY: 2000,
-  TEMPMAIL_EMAIL_OPEN_DELAY: 1500,
-  CURSOR_CLOSE_DELAY: 2000,
-  UPDATE_CHECK_TIMEOUT: 15000
+  app: {
+    splashDuration: 1800,
+    updateCheckTimeout: 15000
+  },
+  tempmail: {
+    loadDelay: 2500,
+    formDelay: 1800,
+    actionDelay: 400,
+    createDelay: 1500,
+    reloadDelay: 2000,
+    emailOpenDelay: 1500
+  },
+  cursor: {
+    closeDelay: 2000
+  },
+  notification: {
+    success: 3000,
+    error: 4000,
+    info: 3500,
+    warning: 4000
+  }
 };
 
 // Session constants
@@ -107,13 +120,18 @@ const WEB = {
   RETRY_DELAY: 2000
 };
 
-// Validation constants
+// Validation patterns and limits
 const VALIDATION = {
-  MAX_STRING_LENGTH: 1000,
-  MIN_PASSWORD_LENGTH: 8,
-  EMAIL_REGEX: /^[^\s@]+@[^\s@]+\.[^\s@]+$/,
-  ZIP_CODE_REGEX: /^\d{5}(-\d{4})?$/,
-  PHONE_REGEX: /^[\d\s\-\(\)\+]{10,}$/
+  strings: {
+    maxLength: 1000,
+    minPasswordLength: 8
+  },
+  patterns: {
+    email: /^[^\s@]+@[^\s@]+\.[^\s@]+$/,
+    zipCode: /^\d{5}(-\d{4})?$/,
+    phone: /^[\d\s\-\(\)\+]{10,}$/,
+    binPattern: /^[0-9x]+$/i
+  }
 };
 
 // XPath selectors for web scraping
@@ -142,16 +160,8 @@ const DATE_FORMAT = {
 
 // Retry and attempt limits
 const RETRY = {
-  MAX_CARD_GENERATION_MULTIPLIER: 10,
-  MIN_ATTEMPTS: 1000
-};
-
-// Electron window preferences
-const BROWSER_WINDOW = {
-  DEFAULT_WIDTH: 1200,
-  DEFAULT_HEIGHT: 800,
-  TEMPMAIL_WIDTH: 1200,
-  TEMPMAIL_HEIGHT: 800
+  maxCardGenerationMultiplier: 10,
+  minAttempts: 1000
 };
 
 // Cursor reset paths (Windows-specific)
@@ -185,12 +195,10 @@ const CARD_TYPES = {
 };
 
 module.exports = {
-  // UI & Window Configuration (from old constants.js)
-  WINDOW,
+  // New organized structure
+  UI,
   PATHS,
   WEB_PREFERENCES,
-  
-  // Application Constants (refactored)
   TIMING,
   SESSION,
   CRYPTO,
@@ -202,15 +210,18 @@ module.exports = {
   OTP_PATTERNS,
   DATE_FORMAT,
   RETRY,
-  BROWSER_WINDOW,
   CURSOR_PATHS,
   LOG,
   CARD_TYPES,
   
-  // Legacy export for backward compatibility
+  // Backward compatibility - Legacy exports
+  WINDOW: UI.window, // Map to new structure
+  BROWSER_WINDOW: UI.window, // Remove redundancy
+  
+  // Legacy config object for backward compatibility
   APP_CONFIG: {
-    window: WINDOW,
-    timing: { splashDuration: 1800 },
+    window: UI.window,
+    timing: { splashDuration: TIMING.app.splashDuration },
     paths: PATHS,
     icons: PATHS.icons,
     webPreferences: WEB_PREFERENCES

@@ -54,14 +54,14 @@ const AdminSidebar = {
         </nav>
 
         <div class="sidebar-footer">
-          <button class="btn btn-secondary btn-small" id="back-to-main-btn" style="margin-bottom: 8px; width: 100%">
+          <button class="btn btn--secondary btn--sm" id="back-to-main-btn" style="margin-bottom: 8px; width: 100%">
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align: middle; margin-right: 4px">
               <line x1="19" y1="12" x2="5" y2="12" />
               <polyline points="12 19 5 12 12 5" />
             </svg>
             Kembali ke Main
           </button>
-          <button class="btn btn-danger btn-small" id="logout-btn">
+          <button class="btn btn--danger btn--sm" id="logout-btn">
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align: middle; margin-right: 4px">
               <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" />
               <polyline points="16 17 21 12 16 7" />

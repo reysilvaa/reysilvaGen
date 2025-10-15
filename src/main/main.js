@@ -107,7 +107,7 @@ function createMainWindow() {
           autoUpdater.checkForUpdatesAndNotify();
         }
       }, 2000); // Increased from 500ms to 2000ms for version loading
-    }, TIMING.SPLASH_DURATION - 500);
+    }, TIMING.app.splashDuration - 500);
   });
 
   mainWindow.on('closed', () => {
@@ -160,6 +160,36 @@ function getTempmailService() {
   return tempmailHeadless;
 }
 
+// ==================== IPC HANDLER FACTORIES ====================
+// DRY principle - Reduce repetitive IPC handler patterns
+
+/**
+ * Create simple getter handler that returns config data
+ */
+function createGetterHandler(getterFn, dataKey = null) {
+  return wrapHandler(async () => {
+    const data = await getterFn();
+    return successResponse(dataKey ? { [dataKey]: data } : data);
+  });
+}
+
+/**
+ * Create config operation handler with automatic success response
+ */
+function createConfigHandler(operation) {
+  return wrapHandler(async (...args) => {
+    const result = await operation(...args);
+    return result.success ? result : successResponse(result);
+  });
+}
+
+/**
+ * Create simple service handler with consistent error handling
+ */
+function createServiceHandler(serviceFn) {
+  return wrapHandler(serviceFn);
+}
+
 // ==================== IPC HANDLERS ====================
 
 // Auto Updater Handlers
@@ -185,33 +215,28 @@ ipcMain.handle('install-update', wrapHandler(() => {
 }));
 
 // Admin Panel Handler
-ipcMain.handle('open-admin-panel', wrapHandler(async () => {
+ipcMain.handle('open-admin-panel', createServiceHandler(async () => {
   createAdminWindow();
   return successResponse();
 }));
 
-// Admin Authentication Handlers
-ipcMain.handle('admin-login', wrapHandler(async (event, { username, password }) => {
-  return config.authenticateAdmin(username, password);
-}));
+// Admin Authentication Handlers  
+ipcMain.handle('admin-login', createConfigHandler((event, { username, password }) => 
+  config.authenticateAdmin(username, password)
+));
 
-ipcMain.handle('admin-verify-session', wrapHandler(async (event, sessionToken) => {
-  return config.verifySession(sessionToken);
-}));
+ipcMain.handle('admin-verify-session', createConfigHandler((event, sessionToken) => 
+  config.verifySession(sessionToken)
+));
 
-ipcMain.handle('admin-logout', wrapHandler(async (event, sessionToken) => {
+ipcMain.handle('admin-logout', createServiceHandler(async (event, sessionToken) => {
   config.logout(sessionToken);
   return successResponse();
 }));
 
-// BIN Management Handlers
-ipcMain.handle('get-all-bins', wrapHandler(async () => {
-  return successResponse({ bins: config.getAllBins() });
-}));
-
-ipcMain.handle('get-active-bins', wrapHandler(async () => {
-  return successResponse({ bins: config.getActiveBins() });
-}));
+// BIN Management Handlers - Using getter factory
+ipcMain.handle('get-all-bins', createGetterHandler(() => config.getAllBins(), 'bins'));
+ipcMain.handle('get-active-bins', createGetterHandler(() => config.getActiveBins(), 'bins'));
 
 ipcMain.handle('load-csv', wrapHandler(async (event, filename) => {
   const fs = require('fs');
@@ -251,62 +276,57 @@ ipcMain.handle('get-app-constants', wrapHandler(async () => {
 
 console.log('✅ IPC handler "get-app-constants" registered');
 
-ipcMain.handle('add-bin', wrapHandler(async (event, { binPattern, cardType, description, createdBy }) => {
-      return config.addBin(binPattern, cardType, description, createdBy);
-}));
+// BIN CRUD Operations - Using config handler factory
+ipcMain.handle('add-bin', createConfigHandler((event, { binPattern, cardType, description, createdBy }) =>
+  config.addBin(binPattern, cardType, description, createdBy)
+));
 
-ipcMain.handle('update-bin', wrapHandler(async (event, { id, binPattern, cardType, description }) => {
-    return config.updateBin(id, binPattern, cardType, description);
-}));
+ipcMain.handle('update-bin', createConfigHandler((event, { id, binPattern, cardType, description }) =>
+  config.updateBin(id, binPattern, cardType, description)
+));
 
-ipcMain.handle('delete-bin', wrapHandler(async (event, id) => {
-    return config.deleteBin(id);
-}));
+ipcMain.handle('delete-bin', createConfigHandler((event, id) =>
+  config.deleteBin(id)
+));
 
-// Settings Handlers
-ipcMain.handle('get-setting', wrapHandler(async (event, key) => {
-  return successResponse({ value: config.getSetting(key) });
-}));
+// Settings Handlers - Using getter/setter factories
+ipcMain.handle('get-setting', createGetterHandler((event, key) => config.getSetting(key), 'value'));
 
-ipcMain.handle('set-setting', wrapHandler(async (event, { key, value }) => {
-    config.setSetting(key, value);
+ipcMain.handle('set-setting', createServiceHandler(async (event, { key, value }) => {
+  config.setSetting(key, value);
   return successResponse();
 }));
 
-// Config Management Handlers
-ipcMain.handle('get-config-path', wrapHandler(async () => {
-  return successResponse({ path: config.getConfigPath() });
-}));
+// Config Management Handlers - Using getter factory
+ipcMain.handle('get-config-path', createGetterHandler(() => config.getConfigPath(), 'path'));
+ipcMain.handle('get-app-version', createGetterHandler(() => app.getVersion(), 'version'));
 
-ipcMain.handle('get-app-version', wrapHandler(async () => {
-  return successResponse({ version: app.getVersion() });
-}));
-
-ipcMain.handle('reset-config', wrapHandler(async () => {
-    config.resetToDefault();
+ipcMain.handle('reset-config', createServiceHandler(async () => {
+  config.resetToDefault();
   return successResponse();
 }));
 
-// Cursor Reset Handlers
-ipcMain.handle('cursor-reset-machine-id', wrapHandler(async () => {
+// Cursor Reset Handlers - Factory for cursor operations
+function createCursorHandler(operation) {
+  return createServiceHandler(async () => {
     const resetManager = new CursorResetManager();
-  return await resetManager.resetMachineId();
+    return await operation(resetManager);
+  });
+}
+
+ipcMain.handle('cursor-reset-machine-id', createCursorHandler(manager => manager.resetMachineId()));
+
+ipcMain.handle('cursor-close', createCursorHandler(async manager => {
+  const success = await manager.killCursor();
+  return successResponse({
+    success,
+    message: success ? 'Cursor berhasil ditutup' : 'Cursor tidak sedang berjalan'
+  });
 }));
 
-ipcMain.handle('cursor-close', wrapHandler(async () => {
-    const resetManager = new CursorResetManager();
-    const success = await resetManager.killCursor();
-    return {
-      success,
-    message: success ? 'Cursor berhasil ditutup' : 'Cursor tidak sedang berjalan',
-  };
-}));
-
-ipcMain.handle('cursor-check-status', wrapHandler(async () => {
-    const resetManager = new CursorResetManager();
-    const isRunning = await resetManager.isCursorRunning();
-    return { isRunning };
-}));
+ipcMain.handle('cursor-check-status', createCursorHandler(async manager => 
+  successResponse({ isRunning: await manager.isCursorRunning() })
+));
 
 // Tempmail Handlers - CRUD Methods
 ipcMain.handle('tempmail-create', lazyServiceHandler(
@@ -329,11 +349,11 @@ ipcMain.handle('tempmail-execute', lazyServiceHandler(
   async (service, event, params) => await service.execute(params)
 ));
 
-ipcMain.handle('tempmail-clear', wrapHandler(async () => {
-    if (tempmailHeadless) {
-      await tempmailHeadless.clear();
-      tempmailHeadless = null;
-    }
+ipcMain.handle('tempmail-clear', createServiceHandler(async () => {
+  if (tempmailHeadless) {
+    await tempmailHeadless.clear();
+    tempmailHeadless = null;
+  }
   return successResponse();
 }));
 

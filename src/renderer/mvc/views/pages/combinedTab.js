@@ -35,7 +35,7 @@ const CombinedTab = {
             </div>
 
             <button
-              class="btn btn-primary btn-large"
+              class="btn btn--primary btn--lg"
               id="generate-combined-btn"
             >
               <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align: middle; margin-right: 6px;">

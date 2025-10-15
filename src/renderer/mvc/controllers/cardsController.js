@@ -16,6 +16,32 @@ class CardsController extends BaseController {
     // Setup UI elements and event listeners
     this.setupElements();
     this.setupEventListeners();
+    
+    // Register content area for cards output
+    this.registerContentArea('cards-output', {
+      type: 'cards',
+      emptyMessage: 'Click "Generate Cards" to create card numbers',
+      placeholderTemplate: '<p class="placeholder">Click "Generate Cards" to create card numbers</p>',
+      validators: [
+        (content, count) => ({
+          valid: count > 0,
+          message: 'No cards to process'
+        })
+      ]
+    });
+    
+    // Register validation rules
+    this.registerValidationRules('cards-form', {
+      'bin-select': [
+        { type: 'selection', message: 'Please select a BIN pattern' }
+      ],
+      'card-count': [
+        { type: 'required', message: 'Card count is required' },
+        { type: 'number', message: 'Card count must be a valid number' },
+        { type: 'min', value: 1, message: 'Card count must be at least 1' },
+        { type: 'max', value: 10000, message: 'Card count must be at most 10000' }
+      ]
+    });
   }
 
   async initializeCardGenerator() {
@@ -51,15 +77,19 @@ class CardsController extends BaseController {
   }
 
   async handleGenerate() {
+    // Use BaseController validation
     const binPattern = this.elements['bin-select']?.value?.trim();
-    if (!binPattern) {
-      return this.showError("Please select a BIN pattern");
+    if (!this.validateAndShow(BaseController.quickValidate.selection, binPattern, 'BIN pattern')) {
+      return;
+    }
+
+    const count = parseInt(this.elements['card-count']?.value || '1');
+    if (!this.validateAndShow(BaseController.quickValidate.numberRange, count, 1, 10000, 'Card count')) {
+      return;
     }
 
     const selectedOption = this.elements['bin-select']?.options[this.elements['bin-select'].selectedIndex];
     const cardTypeFromDB = selectedOption?.getAttribute("data-card-type");
-
-    const count = parseInt(this.elements['card-count']?.value || '1');
     const length = this.elements['card-length']?.value === "auto" ? null : parseInt(this.elements['card-length']?.value);
     const cvvLength = this.elements['cvv-length']?.value === "auto" ? null : parseInt(this.elements['cvv-length']?.value);
     const yearsAhead = parseInt(this.elements['years-ahead']?.value || '5');
@@ -155,57 +185,17 @@ class CardsController extends BaseController {
   }
 
   handleSave() {
-    const outputDiv = this.elements['cards-output'];
     const format = this.elements['output-format']?.value || 'card';
-    let content = "";
-
-    if (format === "card") {
-      const cardItems = outputDiv.querySelectorAll(".card-item");
-      if (cardItems.length === 0) return this.showError("No cards to save");
-
-      cardItems.forEach((item) => {
-        const number = item.dataset.number;
-        const expiry = item.dataset.expiry;
-        const cvv = item.dataset.cvv;
-        content += `${number}|${expiry.replace("/", "|")}|${cvv}\n`;
-      });
-    } else {
-      const pre = outputDiv.querySelector("pre");
-      if (!pre || !pre.textContent.trim()) return this.showError("No cards to save");
-      content = pre.textContent;
-    }
-
-    const ext = format === "json" ? "json" : format === "csv" ? "csv" : "txt";
-    this.downloadFile(content, `ReysilvaGen-cards-${Date.now()}.${ext}`);
-    this.showSuccess("Cards saved successfully!");
+    this.saveContentFromArea('cards-output', format, 'ReysilvaGen-cards');
   }
 
   async handleCopy() {
-    const outputDiv = this.elements['cards-output'];
     const format = this.elements['output-format']?.value || 'card';
-    let content = "";
-
-    if (format === "card") {
-      const cardItems = outputDiv.querySelectorAll(".card-item");
-      if (cardItems.length === 0) return this.showError("No cards to copy");
-
-      cardItems.forEach((item) => {
-        const number = item.dataset.number;
-        const expiry = item.dataset.expiry;
-        const cvv = item.dataset.cvv;
-        content += `${number}|${expiry.replace("/", "|")}|${cvv}\n`;
-      });
-    } else {
-      const pre = outputDiv.querySelector("pre");
-      if (!pre || !pre.textContent.trim()) return this.showError("No cards to copy");
-      content = pre.textContent;
-    }
-
-    await this.copyToClipboard(content, 'Cards');
+    await this.copyContentFromArea('cards-output', format, 'Cards');
   }
 
   handleClear() {
-    this.elements['cards-output'].innerHTML = '<p class="placeholder">Click "Generate Cards" to create card numbers</p>';
+    this.clearContentArea('cards-output');
     this.elements['cards-generated'].textContent = "0 cards";
     this.elements['cards-output'].className = "cards-display";
   }
@@ -217,16 +207,6 @@ class CardsController extends BaseController {
     if (hasCards) {
       this.handleGenerate(); // Re-render with new format
     }
-  }
-
-  downloadFile(content, filename) {
-    const blob = new Blob([content], { type: "text/plain" });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement("a");
-    a.href = url;
-    a.download = filename;
-    a.click();
-    URL.revokeObjectURL(url);
   }
 }
 

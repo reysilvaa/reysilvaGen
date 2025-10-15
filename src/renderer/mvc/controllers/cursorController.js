@@ -6,32 +6,6 @@
 class CursorController extends BaseController {
   constructor() {
     super('Cursor', { logLevel: 'info' });
-    this.logColors = {
-      info: "#4a9eff",
-      success: "#4ade80",
-      error: "#f87171",
-      warning: "#ffc107",
-    };
-    this.logIcons = {
-      info: `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="vertical-align: middle; margin-right: 6px;">
-        <circle cx="12" cy="12" r="10"/>
-        <line x1="12" y1="16" x2="12" y2="12"/>
-        <line x1="12" y1="8" x2="12.01" y2="8"/>
-      </svg>`,
-      success: `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="vertical-align: middle; margin-right: 6px;">
-        <polyline points="20 6 9 17 4 12"/>
-      </svg>`,
-      error: `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="vertical-align: middle; margin-right: 6px;">
-        <circle cx="12" cy="12" r="10"/>
-        <line x1="15" y1="9" x2="9" y2="15"/>
-        <line x1="9" y1="9" x2="15" y2="15"/>
-      </svg>`,
-      warning: `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="vertical-align: middle; margin-right: 6px;">
-        <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/>
-        <line x1="12" y1="9" x2="12" y2="13"/>
-        <line x1="12" y1="17" x2="12.01" y2="17"/>
-      </svg>`,
-    };
   }
 
   async onInit() {
@@ -68,18 +42,18 @@ class CursorController extends BaseController {
   }
 
   async handleResetMachineId() {
-    this.clearOutput();
+    this.clearOutput('cursor-reset-output');
     this.hideIdsDisplay();
     
     await this.safeAsync(async () => {
-      this.addLogEntry("Memulai reset Machine ID...", "info");
+      this.addLogEntry('cursor-reset-output', "Memulai reset Machine ID...", "info");
 
       const result = await window.cursorResetAPI.resetMachineId();
       
       if (result.success) {
         // Display logs from the operation
         result.logs?.forEach((log) => {
-          this.addLogEntry(log.message, log.type);
+          this.addLogEntry('cursor-reset-output', log.message, log.type);
         });
 
         // Display new IDs if available
@@ -87,27 +61,27 @@ class CursorController extends BaseController {
           this.displayNewIds(result.newIds);
         }
 
-        this.addLogEntry("Machine ID berhasil direset!", "success");
+        this.addLogEntry('cursor-reset-output', "Machine ID berhasil direset!", "success");
         this.showSuccess("Machine ID reset berhasil!");
       } else {
-        this.addLogEntry(`Error: ${result.message}`, "error");
+        this.addLogEntry('cursor-reset-output', `Error: ${result.message}`, "error");
         this.showError(result.message);
       }
     }, 'Failed to reset machine ID');
   }
 
   async handleCloseCursor() {
-    this.clearOutput();
+    this.clearOutput('cursor-reset-output');
     
     await this.safeAsync(async () => {
-      this.addLogEntry("Menutup Cursor...", "info");
+      this.addLogEntry('cursor-reset-output', "Menutup Cursor...", "info");
       
       const result = await window.cursorResetAPI.closeCursor();
       
       const message = result.success ? "Cursor ditutup!" : result.message;
       const type = result.success ? "success" : "warning";
       
-      this.addLogEntry(message, type);
+      this.addLogEntry('cursor-reset-output', message, type);
       
       if (result.success) {
         this.showSuccess("Cursor ditutup!");
@@ -116,66 +90,41 @@ class CursorController extends BaseController {
   }
 
   async handleCheckStatus() {
-    this.clearOutput();
+    this.clearOutput('cursor-reset-output');
     
     await this.safeAsync(async () => {
-      this.addLogEntry("Memeriksa status...", "info");
+      this.addLogEntry('cursor-reset-output', "Memeriksa status...", "info");
       
       const result = await window.cursorResetAPI.checkCursorStatus();
       
       const message = result.isRunning ? "Cursor berjalan" : "Cursor tidak berjalan";
       const type = result.isRunning ? "success" : "info";
       
-      this.addLogEntry(message, type);
+      this.addLogEntry('cursor-reset-output', message, type);
     }, 'Failed to check Cursor status');
   }
 
-  addLogEntry(message, type = "info") {
-    const outputElement = this.elements['cursor-reset-output'];
-    if (!outputElement) return;
-
-    const div = document.createElement("div");
-    div.style.color = this.logColors[type];
-    div.style.display = "flex";
-    div.style.alignItems = "center";
-    div.style.marginBottom = "6px";
-    div.innerHTML = this.logIcons[type] + message;
-    
-    outputElement.appendChild(div);
-    outputElement.scrollTop = outputElement.scrollHeight;
-  }
-
-  clearOutput() {
-    const outputElement = this.elements['cursor-reset-output'];
-    if (outputElement) {
-      outputElement.innerHTML = "";
+  clearOutput(elementId) {
+    const element = this.getElement(elementId);
+    if (element) {
+      element.innerHTML = "";
     }
   }
 
   hideIdsDisplay() {
-    const idsElement = this.elements['cursor-reset-ids'];
-    if (idsElement) {
-      idsElement.style.display = "none";
-    }
+    this.utils.updateElement(this.elements['cursor-reset-ids'], {
+      style: { display: 'none' }
+    });
   }
 
   displayNewIds(newIds) {
-    // Update ID display elements (matches Python script output)
-    if (this.elements['new-device-id']) {
-      this.elements['new-device-id'].textContent = newIds.devDeviceId || "-";
-    }
-    if (this.elements['new-machine-id']) {
-      this.elements['new-machine-id'].textContent = newIds.machineId || "-";
-    }
-    if (this.elements['new-sqm-id']) {
-      this.elements['new-sqm-id'].textContent = newIds.sqmId || "-";
-    }
-
-    // Show the IDs display
-    const idsElement = this.elements['cursor-reset-ids'];
-    if (idsElement) {
-      idsElement.style.display = "block";
-    }
+    // Update ID display elements using BaseController utilities
+    this.utils.updateElements({
+      'new-device-id': { textContent: newIds.devDeviceId || "-" },
+      'new-machine-id': { textContent: newIds.machineId || "-" },
+      'new-sqm-id': { textContent: newIds.sqmId || "-" },
+      'cursor-reset-ids': { style: { display: 'block' } }
+    });
   }
 }
 

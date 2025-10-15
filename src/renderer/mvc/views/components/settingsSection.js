@@ -59,7 +59,7 @@ const SettingsSection = {
               <li>Reset all BINs to default values</li>
               <li>Clear all sessions</li>
             </ul>
-            <button class="btn btn-danger" id="reset-config-btn">
+            <button class="btn btn--danger" id="reset-config-btn">
               <svg
                 width="16"
                 height="16"

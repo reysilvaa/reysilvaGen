@@ -75,13 +75,17 @@ class CombinedController extends BaseController {
 
   async handleGenerate() {
     const binPattern = this.elements['combined-bin-select']?.value?.trim();
-    if (!binPattern) {
-      return this.showError("Please select a BIN pattern");
+    if (!this.validateAndShow(BaseController.quickValidate.selection, binPattern, 'BIN pattern')) {
+      return;
+    }
+
+    const count = parseInt(this.elements['combined-count']?.value || '1');
+    if (!this.validateAndShow(BaseController.quickValidate.numberRange, count, 1, 100, 'Count')) {
+      return;
     }
 
     const selectedOption = this.elements['combined-bin-select']?.options[this.elements['combined-bin-select'].selectedIndex];
     const cardTypeFromDB = selectedOption?.getAttribute("data-card-type");
-    const count = parseInt(this.elements['combined-count']?.value || '1');
 
     await this.safeAsync(async () => {
       // Generate cards

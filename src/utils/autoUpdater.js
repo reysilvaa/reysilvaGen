@@ -105,7 +105,7 @@ class AutoUpdaterManager {
       const timeoutPromise = new Promise((_, reject) => {
         setTimeout(() => {
           reject(new Error('Update check timed out'));
-        }, TIMING.UPDATE_CHECK_TIMEOUT);
+        }, TIMING.app.updateCheckTimeout);
       });
       
       // Race between check and timeout

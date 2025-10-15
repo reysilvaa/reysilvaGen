@@ -43,7 +43,7 @@
         <td>${new Date(b.created_at).toLocaleString()}</td>
         <td>
           <div class="bin-actions">
-            <button class="btn btn-secondary btn-icon" onclick="editBin(${
+            <button class="btn btn--secondary btn--icon" onclick="editBin(${
               b.id
             },'${b.bin_pattern}','${b.card_type || ""}','${
           b.description || ""
@@ -53,7 +53,7 @@
                 <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/>
               </svg>
             </button>
-            <button class="btn btn-danger btn-icon" onclick="deleteBin(${
+            <button class="btn btn--danger btn--icon" onclick="deleteBin(${
               b.id
             })" title="Delete">
               <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">

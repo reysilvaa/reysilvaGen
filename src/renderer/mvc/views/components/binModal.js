@@ -54,7 +54,7 @@ const BinModal = {
               style="display: none"
             ></div>
             <div class="button-group">
-              <button type="submit" class="btn btn-primary">
+              <button type="submit" class="btn btn--primary">
                 <svg
                   width="16"
                   height="16"
@@ -72,7 +72,7 @@ const BinModal = {
                 </svg>
                 Save BIN
               </button>
-              <button type="button" class="btn btn-secondary" id="cancel-bin">
+              <button type="button" class="btn btn--secondary" id="cancel-bin">
                 <svg
                   width="16"
                   height="16"

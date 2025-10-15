@@ -24,7 +24,7 @@ const CursorResetTab = {
               style="flex-direction: column; gap: 12px"
             >
               <button
-                class="btn btn-primary btn-large"
+                class="btn btn--primary btn--lg"
                 id="reset-machine-id-btn"
               >
                 <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align: middle; margin-right: 6px;">
@@ -34,7 +34,7 @@ const CursorResetTab = {
                 Reset Machine ID
               </button>
               <button
-                class="btn btn-secondary btn-large"
+                class="btn btn--secondary btn--lg"
                 id="close-cursor-btn"
               >
                 <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align: middle; margin-right: 6px;">
@@ -45,7 +45,7 @@ const CursorResetTab = {
                 Tutup Cursor
               </button>
               <button
-                class="btn btn-secondary btn-large"
+                class="btn btn--secondary btn--lg"
                 id="check-cursor-status-btn"
               >
                 <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align: middle; margin-right: 6px;">

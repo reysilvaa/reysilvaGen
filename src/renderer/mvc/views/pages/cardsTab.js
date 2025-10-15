@@ -1,7 +1,7 @@
 const CardsTab = {
   render() {
     return `
-      <div class="tab-content active" id="cards-tab">
+      <div class="tab-content tab-content--active" id="cards-tab">
         <div class="page-header">
           <h2>Generate Cards</h2>
           <p>
@@ -86,7 +86,7 @@ const CardsTab = {
             </div>
 
             <!-- Primary Action -->
-            <button class="btn btn-primary btn-large" id="generate-btn" style="width: 100%; margin-bottom: 12px;">
+            <button class="btn btn--primary btn--lg" id="generate-btn" style="width: 100%; margin-bottom: 12px;">
               <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align: middle; margin-right: 8px;">
                 <rect x="3" y="3" width="18" height="18" rx="2"/>
                 <path d="M3 9h18M9 3v18"/>
@@ -96,7 +96,7 @@ const CardsTab = {
 
             <!-- Action Buttons -->
             <div class="action-buttons-grid">
-              <button class="btn btn-secondary" id="save-btn">
+              <button class="btn btn--secondary" id="save-btn">
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align: middle; margin-right: 6px;">
                   <path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/>
                   <polyline points="17 21 17 13 7 13 7 21"/>
@@ -104,14 +104,14 @@ const CardsTab = {
                 </svg>
                 Save
               </button>
-              <button class="btn btn-secondary" id="copy-btn">
+              <button class="btn btn--secondary" id="copy-btn">
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align: middle; margin-right: 6px;">
                   <rect x="9" y="9" width="13" height="13" rx="2" ry="2"/>
                   <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/>
                 </svg>
                 Copy
               </button>
-              <button class="btn btn-danger" id="clear-btn" style="grid-column: 1 / -1;">
+              <button class="btn btn--danger" id="clear-btn" style="grid-column: 1 / -1;">
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align: middle; margin-right: 6px;">
                   <polyline points="3 6 5 6 21 6"/>
                   <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/>
